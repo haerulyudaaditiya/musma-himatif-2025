@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import QRCode from 'react-qr-code';
 import { supabase } from '../libs/supabaseClient';
 import { showToast } from '../libs/toast';
+import { checkVotingAvailability } from '../utils/timeCheck';
 import {
   LogOut,
   CheckCircle,
@@ -16,12 +17,15 @@ import {
   Clock,
   MapPin,
   Info,
+  AlertCircle,
+  Eye,
 } from 'lucide-react';
 
 export default function TicketPage() {
   const navigate = useNavigate();
   const [participant, setParticipant] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [votingAvailability, setVotingAvailability] = useState(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const fetchParticipant = useCallback(async () => {
@@ -45,6 +49,10 @@ export default function TicketPage() {
       }
 
       setParticipant(data);
+
+      // Cek ketersediaan voting
+      const availability = await checkVotingAvailability();
+      setVotingAvailability(availability);
     } catch (error) {
       showToast.error(error.message);
       localStorage.removeItem('musma_nim');
@@ -58,10 +66,6 @@ export default function TicketPage() {
     fetchParticipant();
   }, [fetchParticipant]);
 
-  const handleLogout = () => {
-    setShowLogoutModal(true);
-  };
-
   const confirmLogout = () => {
     localStorage.removeItem('musma_nim');
     localStorage.removeItem('musma_nama');
@@ -69,6 +73,38 @@ export default function TicketPage() {
     navigate('/');
     setShowLogoutModal(false);
   };
+
+  const getVotingAction = () => {
+    if (!participant || !votingAvailability) return null;
+
+    const status = participant.sudah_vote
+      ? 'already_voted'
+      : !participant.status_kehadiran
+        ? 'not_checked_in'
+        : votingAvailability.status;
+
+    return {
+      status,
+      canVote:
+        participant.status_kehadiran &&
+        !participant.sudah_vote &&
+        votingAvailability.status === 'active',
+      buttonText: participant.sudah_vote
+        ? 'SUDAH MENGGUNAKAN HAK SUARA'
+        : !participant.status_kehadiran
+          ? 'MENUNGGU CHECK-IN'
+          : votingAvailability.status === 'active'
+            ? 'MASUK BILIK SUARA'
+            : 'MENUNGGU WAKTU VOTING',
+      message: participant.sudah_vote
+        ? 'Terima kasih telah menggunakan hak suara Anda'
+        : !participant.status_kehadiran
+          ? 'Harap check-in terlebih dahulu di venue'
+          : votingAvailability.message,
+    };
+  };
+
+  const votingAction = getVotingAction();
 
   if (loading) {
     return (
@@ -145,7 +181,7 @@ export default function TicketPage() {
                               Nama Lengkap
                             </label>
                           </div>
-                          <div className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg font-medium break-all">
+                          <div className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg font-medium">
                             {participant.nama}
                           </div>
                         </div>
@@ -157,7 +193,7 @@ export default function TicketPage() {
                               NIM
                             </label>
                           </div>
-                          <div className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg font-mono font-medium break-all">
+                          <div className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg font-mono font-medium">
                             {participant.nim}
                           </div>
                         </div>
@@ -223,85 +259,105 @@ export default function TicketPage() {
                 </div>
 
                 {/* Voting Status */}
-                <div className="mb-8">
-                  {participant.sudah_vote ? (
-                    <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl">
-                      <div className="flex items-center gap-3">
-                        <CheckCircle className="w-6 h-6 text-green-600" />
-                        <div>
-                          <h3 className="font-bold text-green-800 text-lg">
-                            Hak Suara Telah Digunakan
-                          </h3>
-                          <p className="text-green-600">
-                            Terima kasih telah menggunakan hak suara Anda
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
+                {votingAction && (
+                  <div className="mb-8">
                     <div
-                      className={`p-4 ${
-                        participant.status_kehadiran
-                          ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200'
-                          : 'bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200'
-                      } rounded-xl`}
+                      className={`p-6 rounded-xl ${
+                        votingAction.canVote
+                          ? 'bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200'
+                          : votingAction.status === 'already_voted'
+                            ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200'
+                            : 'bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200'
+                      }`}
                     >
-                      <div className="flex items-center gap-3">
-                        {participant.status_kehadiran ? (
-                          <Vote className="w-6 h-6 text-blue-600" />
-                        ) : (
-                          <XCircle className="w-6 h-6 text-amber-600" />
-                        )}
-                        <div>
-                          <h3
-                            className={`font-bold text-lg ${
-                              participant.status_kehadiran
-                                ? 'text-blue-800'
-                                : 'text-amber-800'
-                            }`}
-                          >
-                            {participant.status_kehadiran
-                              ? 'Siap Gunakan Hak Suara'
-                              : 'Menunggu Check-in'}
-                          </h3>
-                          <p
-                            className={
-                              participant.status_kehadiran
-                                ? 'text-blue-600'
-                                : 'text-amber-600'
-                            }
-                          >
-                            {participant.status_kehadiran
-                              ? 'Silakan masuk ke bilik suara untuk memilih'
-                              : 'Harap check-in terlebih dahulu di venue'}
-                          </p>
+                      <div className="flex items-center gap-4">
+                        <div
+                          className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                            votingAction.canVote
+                              ? 'bg-green-100 text-green-600'
+                              : votingAction.status === 'already_voted'
+                                ? 'bg-blue-100 text-blue-600'
+                                : 'bg-amber-100 text-amber-600'
+                          }`}
+                        >
+                          {votingAction.canVote ? (
+                            <Vote className="w-6 h-6" />
+                          ) : votingAction.status === 'already_voted' ? (
+                            <CheckCircle className="w-6 h-6" />
+                          ) : (
+                            <AlertCircle className="w-6 h-6" />
+                          )}
                         </div>
+
+                        <div className="flex-1">
+                          <h3 className="font-bold text-xl mb-1">
+                            {votingAction.status === 'already_voted'
+                              ? 'Sudah Menggunakan Hak Suara'
+                              : votingAction.status === 'not_checked_in'
+                                ? 'Belum Check-in'
+                                : votingAvailability?.status === 'active'
+                                  ? 'Siap Memilih'
+                                  : votingAvailability?.status === 'too_early'
+                                    ? 'Menunggu Waktu Voting'
+                                    : votingAvailability?.status === 'too_late'
+                                      ? 'Voting Ditutup'
+                                      : 'Status Voting'}
+                          </h3>
+                          <p className="text-gray-700">
+                            {votingAction.message}
+                          </p>
+
+                          {votingAvailability &&
+                            votingAvailability.status === 'active' &&
+                            !participant.sudah_vote && (
+                              <div className="mt-2 inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                                Voting sedang berlangsung
+                              </div>
+                            )}
+                        </div>
+
+                        {votingAction.canVote && (
+                          <button
+                            onClick={() => navigate('/vote')}
+                            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow hover:shadow-md flex items-center gap-2"
+                          >
+                            <Vote className="w-5 h-5" />
+                            Masuk Bilik Suara
+                          </button>
+                        )}
                       </div>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
 
                 {/* Action Buttons */}
                 <div className="space-y-4">
-                  {!participant.sudah_vote && (
+                  {/* Voting Button - hanya jika bisa vote */}
+                  {votingAction?.canVote && (
                     <button
                       onClick={() => navigate('/vote')}
-                      disabled={!participant.status_kehadiran}
-                      className={`w-full py-3 rounded-lg font-medium transition-all shadow ${
-                        participant.status_kehadiran
-                          ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 hover:shadow-md'
-                          : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                      } flex items-center justify-center gap-2`}
+                      className="w-full py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow hover:shadow-md flex items-center justify-center gap-2"
                     >
                       <Vote className="w-5 h-5" />
-                      {participant.status_kehadiran
-                        ? 'MASUK BILIK SUARA'
-                        : 'MENUNGGU CHECK-IN'}
+                      Masuk Bilik Suara
                     </button>
                   )}
 
+                  {/* Quick Count Button - hanya setelah vote */}
+                  {participant.sudah_vote && (
+                    <button
+                      onClick={() => navigate('/results')}
+                      className="w-full py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-medium rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all shadow hover:shadow-md flex items-center justify-center gap-2"
+                    >
+                      <Eye className="w-5 h-5" />
+                      Lihat Hasil Quick Count
+                    </button>
+                  )}
+
+                  {/* Logout Button - selalu ada */}
                   <button
-                    onClick={handleLogout}
+                    onClick={() => setShowLogoutModal(true)}
                     className="w-full py-3 border-2 border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
                   >
                     <LogOut className="w-5 h-5" />
