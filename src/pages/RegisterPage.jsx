@@ -11,6 +11,8 @@ import {
   Mail,
   User,
   Hash,
+  LogIn,
+  UserPlus,
 } from 'lucide-react';
 
 // Pindahkan keluar dari komponen (atau gunakan useMemo)
@@ -22,6 +24,9 @@ export default function RegisterPage() {
   const [classes, setClasses] = useState([]);
   const [classCounts, setClassCounts] = useState({});
   const [step, setStep] = useState(1);
+  const [mode, setMode] = useState('register');
+  const [loginNim, setLoginNim] = useState('');
+  const [loginErrors, setLoginErrors] = useState({ nim: '' });
 
   const [formData, setFormData] = useState({
     nim: '',
@@ -300,242 +305,400 @@ export default function RegisterPage() {
 
   const availableClassesForAngkatan = getAvailableClassesForAngkatan();
 
+  const validateLoginField = (name, value) => {
+    if (name === 'nim') {
+      if (!value.trim()) return 'NIM harus diisi';
+      if (value.length !== 14) return 'NIM harus 14 digit';
+      if (!/^\d+$/.test(value)) return 'NIM harus berupa angka';
+    }
+    return '';
+  };
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+
+    const error = validateLoginField('nim', loginNim);
+    setLoginErrors({ nim: error });
+
+    if (error) {
+      showToast.error(error);
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('nim', loginNim)
+        .single();
+
+      if (error || !data) {
+        throw new Error('NIM tidak ditemukan. Silakan daftar terlebih dahulu');
+      }
+
+      // Simpan session
+      localStorage.setItem('musma_nim', data.nim);
+      localStorage.setItem('musma_nama', data.nama);
+      localStorage.setItem('musma_kelas', data.kelas);
+
+      showToast.success(`Selamat datang kembali, ${data.nama}`);
+      navigate('/ticket');
+    } catch (error) {
+      showToast.error(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-50">
       <div className="container mx-auto px-4 py-8 max-w-5xl">
-        {/* Progress Steps */}
+        {/* Toggle Button */}
         <div className="flex justify-center mb-10">
-          <div className="flex items-center bg-white rounded-full px-6 py-3 shadow-sm border border-gray-200">
-            <div
-              className={`flex items-center ${step >= 1 ? 'text-blue-600' : 'text-gray-400'}`}
+          <div className="inline-flex bg-white rounded-xl shadow border border-gray-200 p-1.5">
+            <button
+              onClick={() => setMode('register')}
+              className={`px-8 py-3 rounded-lg font-medium transition-all flex items-center gap-3 ${
+                mode === 'register'
+                  ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow'
+                  : 'text-gray-700 hover:bg-gray-50'
+              }`}
             >
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center mr-2 ${step >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
-              >
-                {step > 1 ? <Check className="w-4 h-4" /> : '1'}
-              </div>
-              <span className="font-medium">Identitas</span>
-            </div>
-
-            <div className="w-12 h-0.5 bg-gray-300 mx-4"></div>
-
-            <div
-              className={`flex items-center ${step >= 2 ? 'text-blue-600' : 'text-gray-400'}`}
+              <UserPlus className="w-5 h-5" />
+              <span className="font-semibold">Daftar Baru</span>
+            </button>
+            <button
+              onClick={() => setMode('login')}
+              className={`px-8 py-3 rounded-lg font-medium transition-all flex items-center gap-3 ${
+                mode === 'login'
+                  ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow'
+                  : 'text-gray-700 hover:bg-gray-50'
+              }`}
             >
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center mr-2 ${step >= 2 ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
-              >
-                2
-              </div>
-              <span className="font-medium">Pilih Kelas</span>
-            </div>
+              <LogIn className="w-5 h-5" />
+              <span className="font-semibold">Sudah Daftar</span>
+            </button>
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Form Section */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-              {step === 1 ? (
-                <div className="p-8">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                    Data Diri Peserta
-                  </h2>
-                  <p className="text-gray-600 mb-8">
-                    Isi data diri sesuai dengan KTM/Transkrip
+        {/* Mode Login */}
+        {mode === 'login' ? (
+          <div className="max-w-md mx-auto">
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                Masuk dengan NIM
+              </h2>
+              <p className="text-gray-600 mb-8">
+                Masukkan NIM yang sudah terdaftar untuk melihat tiket Anda
+              </p>
+
+              <form onSubmit={handleLogin} className="space-y-6">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Hash className="w-4 h-4 text-gray-500" />
+                    <label className="block text-sm font-medium text-gray-700">
+                      NIM
+                    </label>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="23416255200026"
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition font-mono ${
+                      loginErrors.nim ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    value={loginNim}
+                    onChange={(e) => {
+                      setLoginNim(e.target.value);
+                      // Real-time validation
+                      const error = validateLoginField('nim', e.target.value);
+                      setLoginErrors({ nim: error });
+                    }}
+                    maxLength={14}
+                  />
+                  {loginErrors.nim && (
+                    <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                      <AlertCircle className="w-4 h-4" />
+                      {loginErrors.nim}
+                    </p>
+                  )}
+                  <p className="mt-1 text-sm text-gray-500">
+                    14 digit NIM Anda
                   </p>
-
-                  <div className="space-y-6">
-                    {/* NIM Field */}
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <Hash className="w-4 h-4 text-gray-500" />
-                        <label className="block text-sm font-medium text-gray-700">
-                          NIM
-                        </label>
-                      </div>
-                      <input
-                        type="text"
-                        name="nim"
-                        placeholder="23416255200026"
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition font-mono ${
-                          errors.nim ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                        value={formData.nim}
-                        onChange={handleChange}
-                        maxLength={14}
-                      />
-                      <div className="flex justify-between mt-2">
-                        {formData.angkatan && (
-                          <p
-                            className={`text-sm font-medium ${
-                              validAngkatans.includes(formData.angkatan)
-                                ? 'text-blue-600'
-                                : 'text-red-600'
-                            }`}
-                          >
-                            Angkatan: {formData.angkatan}
-                            {!validAngkatans.includes(formData.angkatan) &&
-                              ' (Tidak valid, hanya angkatan 2022-2025)'}
-                          </p>
-                        )}
-                      </div>
-                      {errors.nim && (
-                        <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                          <AlertCircle className="w-4 h-4" />
-                          {errors.nim}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Nama Field */}
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <User className="w-4 h-4 text-gray-500" />
-                        <label className="block text-sm font-medium text-gray-700">
-                          Nama Lengkap
-                        </label>
-                      </div>
-                      <input
-                        type="text"
-                        name="nama"
-                        placeholder="John Doe"
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition ${
-                          errors.nama ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                        value={formData.nama}
-                        onChange={handleChange}
-                      />
-                      <div className="flex justify-between mt-1">
-                        {errors.nama && (
-                          <p className="text-sm text-red-600 flex items-center gap-1">
-                            <AlertCircle className="w-4 h-4" />
-                            {errors.nama}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Email Field */}
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <Mail className="w-4 h-4 text-gray-500" />
-                        <label className="block text-sm font-medium text-gray-700">
-                          Email UBP
-                        </label>
-                      </div>
-                      <input
-                        type="email"
-                        name="email"
-                        placeholder="ifxx.nama@mhs.ubpkarawang.ac.id"
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition ${
-                          errors.email ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                        value={formData.email}
-                        onChange={handleChange}
-                      />
-                      <div className="flex justify-between mt-2">
-                        {errors.email && (
-                          <p className="text-sm text-red-600 flex items-center gap-1">
-                            <AlertCircle className="w-4 h-4" />
-                            {errors.email}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={nextStep}
-                      disabled={
-                        !formData.nim ||
-                        !formData.nama ||
-                        !formData.email ||
-                        errors.nim ||
-                        errors.nama ||
-                        errors.email ||
-                        !validAngkatans.includes(formData.angkatan)
-                      }
-                      className="w-full py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow hover:shadow-md flex items-center justify-center gap-2 mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Lanjutkan ke Pilihan Kelas
-                      <ArrowRight className="w-4 h-4" />
-                    </button>
-                  </div>
                 </div>
-              ) : (
-                <div className="p-8">
-                  <div className="flex items-center justify-between mb-8">
-                    <div>
-                      <h2 className="text-2xl font-bold text-gray-900">
-                        Pilih Kelas Perwakilan
-                      </h2>
-                      <p className="text-gray-600">
-                        Maksimal 2 perwakilan per kelas
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => setStep(1)}
-                      className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                    >
-                      ← Edit Data
-                    </button>
-                  </div>
 
-                  {/* Info Angkatan */}
-                  {formData.angkatan && (
-                    <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <Users className="w-6 h-6 text-blue-600" />
-                          <div>
-                            <h3 className="font-bold text-blue-800">
-                              Angkatan {formData.angkatan}
-                            </h3>
-                            <p className="text-blue-600 text-sm">
-                              Pilih kelas sesuai angkatan Anda
+                <button
+                  type="submit"
+                  disabled={!loginNim || loading}
+                  className="w-full py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow hover:shadow-md flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Memverifikasi...
+                    </div>
+                  ) : (
+                    <>
+                      Masuk ke Tiket Saya
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+              </form>
+
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <p className="text-sm text-gray-600 text-center">
+                  Belum punya tiket?{' '}
+                  <button
+                    onClick={() => setMode('register')}
+                    className="text-blue-600 hover:text-blue-800 font-medium"
+                  >
+                    Daftar sebagai perwakilan baru
+                  </button>
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Progress Steps */}
+            <div className="flex justify-center mb-10">
+              <div className="flex items-center bg-white rounded-full px-6 py-3 shadow-sm border border-gray-200">
+                <div
+                  className={`flex items-center ${step >= 1 ? 'text-blue-600' : 'text-gray-400'}`}
+                >
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center mr-2 ${step >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+                  >
+                    {step > 1 ? <Check className="w-4 h-4" /> : '1'}
+                  </div>
+                  <span className="font-medium">Identitas</span>
+                </div>
+
+                <div className="w-12 h-0.5 bg-gray-300 mx-4"></div>
+
+                <div
+                  className={`flex items-center ${step >= 2 ? 'text-blue-600' : 'text-gray-400'}`}
+                >
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center mr-2 ${step >= 2 ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+                  >
+                    2
+                  </div>
+                  <span className="font-medium">Pilih Kelas</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid lg:grid-cols-3 gap-8">
+              {/* Form Section */}
+              <div className="lg:col-span-2">
+                <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                  {step === 1 ? (
+                    <div className="p-8">
+                      <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                        Data Diri Peserta
+                      </h2>
+                      <p className="text-gray-600 mb-8">
+                        Isi data diri sesuai dengan KTM/Transkrip
+                      </p>
+
+                      <div className="space-y-6">
+                        {/* NIM Field */}
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <Hash className="w-4 h-4 text-gray-500" />
+                            <label className="block text-sm font-medium text-gray-700">
+                              NIM
+                            </label>
+                          </div>
+                          <input
+                            type="text"
+                            name="nim"
+                            placeholder="23416255200026"
+                            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition font-mono ${
+                              errors.nim ? 'border-red-500' : 'border-gray-300'
+                            }`}
+                            value={formData.nim}
+                            onChange={handleChange}
+                            maxLength={14}
+                          />
+                          <div className="flex justify-between mt-2">
+                            {formData.angkatan && (
+                              <p
+                                className={`text-sm font-medium ${
+                                  validAngkatans.includes(formData.angkatan)
+                                    ? 'text-blue-600'
+                                    : 'text-red-600'
+                                }`}
+                              >
+                                Angkatan: {formData.angkatan}
+                                {!validAngkatans.includes(formData.angkatan) &&
+                                  ' (Tidak valid, hanya angkatan 2022-2025)'}
+                              </p>
+                            )}
+                          </div>
+                          {errors.nim && (
+                            <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                              <AlertCircle className="w-4 h-4" />
+                              {errors.nim}
                             </p>
+                          )}
+                        </div>
+
+                        {/* Nama Field */}
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <User className="w-4 h-4 text-gray-500" />
+                            <label className="block text-sm font-medium text-gray-700">
+                              Nama Lengkap
+                            </label>
+                          </div>
+                          <input
+                            type="text"
+                            name="nama"
+                            placeholder="John Doe"
+                            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition ${
+                              errors.nama ? 'border-red-500' : 'border-gray-300'
+                            }`}
+                            value={formData.nama}
+                            onChange={handleChange}
+                          />
+                          <div className="flex justify-between mt-1">
+                            {errors.nama && (
+                              <p className="text-sm text-red-600 flex items-center gap-1">
+                                <AlertCircle className="w-4 h-4" />
+                                {errors.nama}
+                              </p>
+                            )}
                           </div>
                         </div>
-                        <div className="text-sm text-blue-700 font-medium">
-                          {availableClassesForAngkatan.length} kelas tersedia
+
+                        {/* Email Field */}
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <Mail className="w-4 h-4 text-gray-500" />
+                            <label className="block text-sm font-medium text-gray-700">
+                              Email UBP
+                            </label>
+                          </div>
+                          <input
+                            type="email"
+                            name="email"
+                            placeholder="ifxx.nama@mhs.ubpkarawang.ac.id"
+                            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition ${
+                              errors.email
+                                ? 'border-red-500'
+                                : 'border-gray-300'
+                            }`}
+                            value={formData.email}
+                            onChange={handleChange}
+                          />
+                          <div className="flex justify-between mt-2">
+                            {errors.email && (
+                              <p className="text-sm text-red-600 flex items-center gap-1">
+                                <AlertCircle className="w-4 h-4" />
+                                {errors.email}
+                              </p>
+                            )}
+                          </div>
                         </div>
+
+                        <button
+                          onClick={nextStep}
+                          disabled={
+                            !formData.nim ||
+                            !formData.nama ||
+                            !formData.email ||
+                            errors.nim ||
+                            errors.nama ||
+                            errors.email ||
+                            !validAngkatans.includes(formData.angkatan)
+                          }
+                          className="w-full py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow hover:shadow-md flex items-center justify-center gap-2 mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Lanjutkan ke Pilihan Kelas
+                          <ArrowRight className="w-4 h-4" />
+                        </button>
                       </div>
                     </div>
-                  )}
-
-                  {/* Kelas Selection */}
-                  <div className="space-y-8">
-                    {formData.angkatan &&
-                    validAngkatans.includes(formData.angkatan) ? (
-                      <div>
-                        <div className="flex items-center gap-2 mb-4">
-                          <Calendar className="w-5 h-5 text-gray-500" />
-                          <h3 className="text-lg font-semibold text-gray-900">
-                            Kelas Angkatan {formData.angkatan}
-                          </h3>
+                  ) : (
+                    <div className="p-8">
+                      <div className="flex items-center justify-between mb-8">
+                        <div>
+                          <h2 className="text-2xl font-bold text-gray-900">
+                            Pilih Kelas Perwakilan
+                          </h2>
+                          <p className="text-gray-600">
+                            Maksimal 2 perwakilan per kelas
+                          </p>
                         </div>
+                        <button
+                          onClick={() => setStep(1)}
+                          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                        >
+                          ← Edit Data
+                        </button>
+                      </div>
 
-                        {availableClassesForAngkatan.length > 0 ? (
-                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                            {availableClassesForAngkatan.map((cls) => {
-                              const count = classCounts[cls.nama_kelas] || 0;
-                              const isFull = count >= 2;
-                              const isSelected =
-                                formData.kelas === cls.nama_kelas;
+                      {/* Info Angkatan */}
+                      {formData.angkatan && (
+                        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <Users className="w-6 h-6 text-blue-600" />
+                              <div>
+                                <h3 className="font-bold text-blue-800">
+                                  Angkatan {formData.angkatan}
+                                </h3>
+                                <p className="text-blue-600 text-sm">
+                                  Pilih kelas sesuai angkatan Anda
+                                </p>
+                              </div>
+                            </div>
+                            <div className="text-sm text-blue-700 font-medium">
+                              {availableClassesForAngkatan.length} kelas
+                              tersedia
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
-                              return (
-                                <button
-                                  key={cls.id}
-                                  type="button"
-                                  onClick={() =>
-                                    !isFull &&
-                                    setFormData((prev) => ({
-                                      ...prev,
-                                      kelas: cls.nama_kelas,
-                                    }))
-                                  }
-                                  disabled={isFull}
-                                  className={`
+                      {/* Kelas Selection */}
+                      <div className="space-y-8">
+                        {formData.angkatan &&
+                        validAngkatans.includes(formData.angkatan) ? (
+                          <div>
+                            <div className="flex items-center gap-2 mb-4">
+                              <Calendar className="w-5 h-5 text-gray-500" />
+                              <h3 className="text-lg font-semibold text-gray-900">
+                                Kelas Angkatan {formData.angkatan}
+                              </h3>
+                            </div>
+
+                            {availableClassesForAngkatan.length > 0 ? (
+                              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                                {availableClassesForAngkatan.map((cls) => {
+                                  const count =
+                                    classCounts[cls.nama_kelas] || 0;
+                                  const isFull = count >= 2;
+                                  const isSelected =
+                                    formData.kelas === cls.nama_kelas;
+
+                                  return (
+                                    <button
+                                      key={cls.id}
+                                      type="button"
+                                      onClick={() =>
+                                        !isFull &&
+                                        setFormData((prev) => ({
+                                          ...prev,
+                                          kelas: cls.nama_kelas,
+                                        }))
+                                      }
+                                      disabled={isFull}
+                                      className={`
                                     relative p-4 rounded-xl border-2 text-center transition-all
                                     ${
                                       isSelected
@@ -548,194 +711,200 @@ export default function RegisterPage() {
                                         : 'cursor-pointer'
                                     }
                                   `}
-                                >
-                                  <div className="font-bold text-lg mb-2">
-                                    {cls.nama_kelas}
-                                  </div>
-                                  <div
-                                    className={`text-xs font-medium px-2 py-1 rounded-full ${
-                                      isFull
-                                        ? 'bg-red-100 text-red-800'
-                                        : 'bg-green-100 text-green-800'
-                                    }`}
-                                  >
-                                    {count}/2
-                                  </div>
-                                  {isFull && (
-                                    <AlertCircle className="absolute top-2 right-2 w-4 h-4 text-red-500" />
-                                  )}
-                                  {isSelected && (
-                                    <Check className="absolute top-2 right-2 w-4 h-4 text-blue-500" />
-                                  )}
-                                </button>
-                              );
-                            })}
+                                    >
+                                      <div className="font-bold text-lg mb-2">
+                                        {cls.nama_kelas}
+                                      </div>
+                                      <div
+                                        className={`text-xs font-medium px-2 py-1 rounded-full ${
+                                          isFull
+                                            ? 'bg-red-100 text-red-800'
+                                            : 'bg-green-100 text-green-800'
+                                        }`}
+                                      >
+                                        {count}/2
+                                      </div>
+                                      {isFull && (
+                                        <AlertCircle className="absolute top-2 right-2 w-4 h-4 text-red-500" />
+                                      )}
+                                      {isSelected && (
+                                        <Check className="absolute top-2 right-2 w-4 h-4 text-blue-500" />
+                                      )}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            ) : (
+                              <div className="text-center py-8 bg-gray-50 rounded-xl">
+                                <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                                <p className="text-gray-600 font-medium">
+                                  Tidak ada kelas tersedia untuk angkatan{' '}
+                                  {formData.angkatan}
+                                </p>
+                              </div>
+                            )}
                           </div>
                         ) : (
-                          <div className="text-center py-8 bg-gray-50 rounded-xl">
-                            <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                            <p className="text-gray-600 font-medium">
-                              Tidak ada kelas tersedia untuk angkatan{' '}
-                              {formData.angkatan}
+                          <div className="text-center py-8 bg-red-50 rounded-xl">
+                            <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-3" />
+                            <p className="text-red-600 font-medium">
+                              Angkatan NIM Anda tidak valid. Hanya angkatan
+                              2022-2025 yang dapat mendaftar.
                             </p>
+                            <button
+                              onClick={() => setStep(1)}
+                              className="mt-4 text-blue-600 hover:text-blue-800 font-medium"
+                            >
+                              ← Kembali ke step 1
+                            </button>
                           </div>
                         )}
                       </div>
-                    ) : (
-                      <div className="text-center py-8 bg-red-50 rounded-xl">
-                        <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-3" />
-                        <p className="text-red-600 font-medium">
-                          Angkatan NIM Anda tidak valid. Hanya angkatan
-                          2022-2025 yang dapat mendaftar.
-                        </p>
-                        <button
-                          onClick={() => setStep(1)}
-                          className="mt-4 text-blue-600 hover:text-blue-800 font-medium"
-                        >
-                          ← Kembali ke step 1
-                        </button>
-                      </div>
-                    )}
-                  </div>
 
-                  {/* Selected Class Info */}
-                  {formData.kelas && (
-                    <div className="mt-8 p-4 bg-green-50 border border-green-200 rounded-xl">
-                      <div className="flex items-center gap-3">
-                        <Users className="w-6 h-6 text-green-600" />
-                        <div>
-                          <h3 className="font-bold text-green-800 text-lg">
-                            Kelas Dipilih: {formData.kelas}
-                          </h3>
-                          <p className="text-green-600">
-                            Kuota tersisa:{' '}
-                            {2 - (classCounts[formData.kelas] || 0)} dari 2
-                            kursi
-                          </p>
+                      {/* Selected Class Info */}
+                      {formData.kelas && (
+                        <div className="mt-8 p-4 bg-green-50 border border-green-200 rounded-xl">
+                          <div className="flex items-center gap-3">
+                            <Users className="w-6 h-6 text-green-600" />
+                            <div>
+                              <h3 className="font-bold text-green-800 text-lg">
+                                Kelas Dipilih: {formData.kelas}
+                              </h3>
+                              <p className="text-green-600">
+                                Kuota tersisa:{' '}
+                                {2 - (classCounts[formData.kelas] || 0)} dari 2
+                                kursi
+                              </p>
+                            </div>
+                          </div>
                         </div>
-                      </div>
+                      )}
+
+                      {/* Submit Button */}
+                      <button
+                        onClick={handleSubmit}
+                        disabled={!formData.kelas || loading}
+                        className="w-full py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed mt-8"
+                      >
+                        {loading ? (
+                          <div className="flex items-center justify-center gap-2">
+                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            Memproses Pendaftaran...
+                          </div>
+                        ) : (
+                          'Daftar sebagai Perwakilan'
+                        )}
+                      </button>
                     </div>
                   )}
+                </div>
+              </div>
 
-                  {/* Submit Button */}
-                  <button
-                    onClick={handleSubmit}
-                    disabled={!formData.kelas || loading}
-                    className="w-full py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed mt-8"
-                  >
-                    {loading ? (
-                      <div className="flex items-center justify-center gap-2">
-                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        Memproses Pendaftaran...
+              {/* Sidebar - Info */}
+              <div className="space-y-6">
+                {/* Rules Card */}
+                <div className="bg-white rounded-xl shadow border border-gray-100 p-6">
+                  <h3 className="font-bold text-gray-900 mb-4">Ketentuan</h3>
+                  <ul className="space-y-3 text-sm text-gray-600">
+                    <li className="flex items-start gap-2">
+                      <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs mt-0.5">
+                        1
                       </div>
-                    ) : (
-                      'Daftar sebagai Perwakilan'
-                    )}
-                  </button>
+                      <span>
+                        Maksimal <strong>2 orang</strong> per kelas
+                      </span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs mt-0.5">
+                        2
+                      </div>
+                      <span>
+                        Total: <strong>54 peserta</strong> (27 kelas)
+                      </span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs mt-0.5">
+                        3
+                      </div>
+                      <span>Email harus aktif (untuk tiket)</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs mt-0.5">
+                        4
+                      </div>
+                      <span>Kelas HARUS sesuai dengan angkatan NIM</span>
+                    </li>
+                  </ul>
                 </div>
-              )}
-            </div>
-          </div>
 
-          {/* Sidebar - Info */}
-          <div className="space-y-6">
-            {/* Rules Card */}
-            <div className="bg-white rounded-xl shadow border border-gray-100 p-6">
-              <h3 className="font-bold text-gray-900 mb-4">Ketentuan</h3>
-              <ul className="space-y-3 text-sm text-gray-600">
-                <li className="flex items-start gap-2">
-                  <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs mt-0.5">
-                    1
+                {/* Contact Card */}
+                <div className="bg-white rounded-xl shadow border border-gray-100 p-6">
+                  <h3 className="font-bold text-gray-900 mb-4">Bantuan</h3>
+                  <div className="space-y-3 text-sm">
+                    <div>
+                      <div className="font-medium text-gray-700">
+                        Panitia MUSMA:
+                      </div>
+                      <div className="text-gray-600">0857-XXXX-XXXX</div>
+                    </div>
+                    <div>
+                      <div className="font-medium text-gray-700">Email:</div>
+                      <div className="text-gray-600">
+                        himatif@ubpkarawang.ac.id
+                      </div>
+                    </div>
+                    <div className="pt-3 border-t border-gray-200">
+                      <div className="text-xs text-gray-500">
+                        Tiket digital dikirim via email setelah pendaftaran
+                      </div>
+                    </div>
                   </div>
-                  <span>
-                    Maksimal <strong>2 orang</strong> per kelas
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs mt-0.5">
-                    2
-                  </div>
-                  <span>
-                    Total: <strong>54 peserta</strong> (27 kelas)
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs mt-0.5">
-                    3
-                  </div>
-                  <span>Email harus aktif (untuk tiket)</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs mt-0.5">
-                    4
-                  </div>
-                  <span>Kelas HARUS sesuai dengan angkatan NIM</span>
-                </li>
-              </ul>
-            </div>
+                </div>
 
-            {/* Contact Card */}
-            <div className="bg-white rounded-xl shadow border border-gray-100 p-6">
-              <h3 className="font-bold text-gray-900 mb-4">Bantuan</h3>
-              <div className="space-y-3 text-sm">
-                <div>
-                  <div className="font-medium text-gray-700">
-                    Panitia MUSMA:
-                  </div>
-                  <div className="text-gray-600">0857-XXXX-XXXX</div>
-                </div>
-                <div>
-                  <div className="font-medium text-gray-700">Email:</div>
-                  <div className="text-gray-600">himatif@ubpkarawang.ac.id</div>
-                </div>
-                <div className="pt-3 border-t border-gray-200">
-                  <div className="text-xs text-gray-500">
-                    Tiket digital dikirim via email setelah pendaftaran
+                {/* Stats Card */}
+                <div className="bg-white rounded-xl shadow border border-gray-100 p-6">
+                  <h3 className="font-bold text-gray-900 mb-4">Statistik</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className="text-gray-600">Total Kelas</span>
+                        <span className="font-medium">
+                          {classes.length} kelas
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-blue-600 h-2 rounded-full transition-all duration-500"
+                          style={{
+                            width: `${(fullClasses / classes.length) * 100}%`,
+                          }}
+                        ></div>
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1 text-right">
+                        {fullClasses} kelas penuh
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-green-50 p-3 rounded-lg text-center">
+                        <div className="text-xl font-bold text-green-700">
+                          {availableClasses}
+                        </div>
+                        <div className="text-xs text-green-600">Tersedia</div>
+                      </div>
+                      <div className="bg-red-50 p-3 rounded-lg text-center">
+                        <div className="text-xl font-bold text-red-700">
+                          {fullClasses}
+                        </div>
+                        <div className="text-xs text-red-600">Penuh</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-
-            {/* Stats Card */}
-            <div className="bg-white rounded-xl shadow border border-gray-100 p-6">
-              <h3 className="font-bold text-gray-900 mb-4">Statistik</h3>
-              <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-600">Total Kelas</span>
-                    <span className="font-medium">{classes.length} kelas</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className="bg-blue-600 h-2 rounded-full transition-all duration-500"
-                      style={{
-                        width: `${(fullClasses / classes.length) * 100}%`,
-                      }}
-                    ></div>
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1 text-right">
-                    {fullClasses} kelas penuh
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-green-50 p-3 rounded-lg text-center">
-                    <div className="text-xl font-bold text-green-700">
-                      {availableClasses}
-                    </div>
-                    <div className="text-xs text-green-600">Tersedia</div>
-                  </div>
-                  <div className="bg-red-50 p-3 rounded-lg text-center">
-                    <div className="text-xl font-bold text-red-700">
-                      {fullClasses}
-                    </div>
-                    <div className="text-xs text-red-600">Penuh</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+          </>
+        )}
       </div>
     </div>
   );
