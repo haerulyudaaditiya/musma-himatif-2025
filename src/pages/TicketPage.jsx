@@ -96,6 +96,38 @@ export default function TicketPage() {
             />
           </div>
 
+          {participant.sudah_vote ? (
+            <div className="alert alert-success shadow-lg">
+              <div>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="stroke-current flex-shrink-0 h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <span className="font-bold text-sm">ANDA SUDAH MEMILIH!</span>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => navigate('/vote')}
+              // Tombol disabled jika Belum Check-in
+              disabled={!participant.status_kehadiran}
+              className="btn btn-primary w-full animate-pulse shadow-xl shadow-blue-500/40"
+            >
+              {!participant.status_kehadiran
+                ? 'MENUNGGU PRESENSI...'
+                : 'MASUK KE BILIK SUARA'}
+            </button>
+          )}
+
           <p className="text-xs text-gray-400">
             Tunjukkan QR Code ini kepada panitia di meja registrasi untuk
             presensi.
