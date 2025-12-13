@@ -1,75 +1,88 @@
-/* Import font Inter */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Poppins:wght@600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap');
 
-/* Tailwind directives */
 @import "tailwindcss";
+@plugin "daisyui";
 
-/* Import DaisyUI components */
-@plugin "daisyui" {
-  themes: musma --default;
+:root {
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-heading: 'Poppins', sans-serif;
+  
+  --color-primary: #2563eb;
+  --color-secondary: #7c3aed;
+  --color-accent: #10b981;
+  
+  --radius-card: 1rem;
+  --radius-btn: 0.75rem;
 }
 
-/* Custom styles */
-@layer base {
-  :root {
-    --primary: #2563eb;
-    --secondary: #7c3aed;
-    --success: #10b981;
-    --warning: #f59e0b;
-    --error: #ef4444;
-  }
-
-  * {
-    font-family: 'Inter', sans-serif;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  html {
-    scroll-behavior: smooth;
-  }
+/* Base styles */
+* {
+  font-family: 'Inter', sans-serif;
+  -webkit-tap-highlight-color: transparent;
 }
 
-@layer components {
-  .glass-card {
-    @apply bg-white/70 backdrop-blur-lg border border-white/20 shadow-xl;
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-gradient-to-br from-blue-50 to-gray-50 text-gray-900;
+}
+
+/* Custom utilities */
+@layer utilities {
+  .card-shadow {
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
   }
   
-  .gradient-primary {
-    @apply bg-gradient-to-r from-blue-600 to-purple-600;
+  .glass-effect {
+    @apply bg-white/80 backdrop-blur-sm border border-white/20;
   }
   
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600;
-  }
-
-  .btn-primary {
-    @apply bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 border-none text-white;
-  }
-
-  .input-bordered {
-    @apply focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600;
   }
 }
 
-@layer utilities {
-  .animate-fade-in {
-    animation: fadeIn 0.5s ease-in-out;
-  }
-
-  .animate-slide-up {
-    animation: slideUp 0.3s ease-out;
-  }
-
-  .animate-pulse-slow {
-    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  }
+/* DaisyUI theme adjustments */
+.btn {
+  @apply font-medium transition-all duration-200;
 }
 
-/* DaisyUI theme customization */
-:root {
-  --rounded-btn: 0.75rem;
-  --rounded-box: 1rem;
-  --animation-btn: 0.25s;
-  --animation-input: 0.2s;
-  --btn-focus-scale: 0.95;
+.btn-primary {
+  @apply bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 
+         border-none text-white shadow-md hover:shadow-lg;
+}
+
+.btn-outline {
+  @apply border-2;
+}
+
+.input, .select, .textarea {
+  @apply focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all;
+}
+
+.card {
+  @apply border border-gray-200;
+}
+
+/* Fix input styles for light mode */
+.input, .select, .textarea {
+  @apply bg-white text-gray-900 border-gray-300;
+}
+
+.input:focus, .select:focus, .textarea:focus {
+  @apply border-blue-500 ring-2 ring-blue-500/30;
+}
+
+/* Ensure text is visible in inputs */
+.input::placeholder {
+  @apply text-gray-400;
+}
+
+/* Fix for dark mode interference */
+[data-theme] .input,
+[data-theme] .select,
+[data-theme] .textarea {
+  @apply bg-white text-gray-900;
 }

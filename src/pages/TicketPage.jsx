@@ -381,7 +381,7 @@ export default function TicketPage() {
                   <Calendar className="w-5 h-5 text-gray-500 mt-0.5" />
                   <div>
                     <div className="font-medium text-gray-700">Tanggal</div>
-                    <div className="text-gray-800">Sabtu, 28 Desember 2024</div>
+                    <div className="text-gray-800">Sabtu, 20 Desember 2025</div>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
