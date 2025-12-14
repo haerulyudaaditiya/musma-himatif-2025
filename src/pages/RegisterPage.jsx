@@ -90,6 +90,47 @@ export default function RegisterPage() {
     fetchData();
   }, [validAngkatans]);
 
+  const [eventConfig, setEventConfig] = useState({
+    event_date_display: 'Tanggal belum ditentukan',
+    event_time_display: 'Waktu belum ditentukan',
+    event_location: 'Lokasi belum ditentukan',
+    contact_phone: 'Kontak belum tersedia',
+    contact_email: 'Email belum tersedia',
+  });
+
+  // Tambahkan fetchEventConfig di useEffect yang sudah ada atau buat useEffect baru
+  useEffect(() => {
+    const fetchEventConfig = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('event_config')
+          .select('config_key, config_value')
+          .eq('is_active', true)
+          .in('config_key', [
+            'event_date_display',
+            'event_time_display',
+            'event_location',
+            'contact_phone',
+            'contact_email',
+          ]);
+
+        if (error) throw error;
+
+        if (data) {
+          const configMap = {};
+          data.forEach((item) => {
+            configMap[item.config_key] = item.config_value;
+          });
+          setEventConfig((prev) => ({ ...prev, ...configMap }));
+        }
+      } catch (error) {
+        console.error('Error fetching event config:', error);
+      }
+    };
+
+    fetchEventConfig();
+  }, []);
+
   const validateField = (name, value) => {
     let error = '';
 
@@ -344,6 +385,7 @@ export default function RegisterPage() {
 
       <div className="flex-1">
         {/* Hero Section - Simple */}
+        {/* Hero Section - Simple */}
         <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-4 sm:py-6">
           <div className="container mx-auto px-3 sm:px-4">
             <div className="flex flex-col items-center justify-center mb-4 text-center">
@@ -364,7 +406,7 @@ export default function RegisterPage() {
                       Tanggal Acara
                     </div>
                     <div className="font-bold text-sm sm:text-base">
-                      Sabtu, 20 Desember 2025
+                      {eventConfig.event_date_display}
                     </div>
                   </div>
                 </div>
@@ -375,7 +417,7 @@ export default function RegisterPage() {
                       Lokasi
                     </div>
                     <div className="font-bold text-sm sm:text-base">
-                      Auditorium UBP Karawang
+                      {eventConfig.event_location}
                     </div>
                   </div>
                 </div>
@@ -907,6 +949,7 @@ export default function RegisterPage() {
                   </div>
 
                   {/* Contact Card */}
+                  {/* Contact Card */}
                   <div className="bg-white rounded-xl shadow border border-gray-100 p-3 sm:p-4">
                     <h3 className="font-bold text-gray-900 text-sm sm:text-base mb-2">
                       Bantuan
@@ -916,12 +959,14 @@ export default function RegisterPage() {
                         <div className="font-medium text-gray-700">
                           Panitia MUSMA:
                         </div>
-                        <div className="text-gray-600">0857-XXXX-XXXX</div>
+                        <div className="text-gray-600">
+                          {eventConfig.contact_phone}
+                        </div>
                       </div>
                       <div>
                         <div className="font-medium text-gray-700">Email:</div>
                         <div className="text-gray-600 break-words">
-                          himatif@ubpkarawang.ac.id
+                          {eventConfig.contact_email}
                         </div>
                       </div>
                     </div>

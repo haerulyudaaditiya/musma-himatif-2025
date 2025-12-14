@@ -472,19 +472,74 @@ export default function AdminConfigPage() {
                           className={`inline-flex items-center gap-1 px-2 py-1 rounded mt-1 ${config.config_value === 'true' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
                         >
                           {config.config_value === 'true' ? (
-                            <>
-                              Diaktifkan
-                            </>
+                            <>Diaktifkan</>
                           ) : (
-                            <>
-                              Dinonaktifkan
-                            </>
+                            <>Dinonaktifkan</>
                           )}
                         </div>
                       </div>
                     </div>
                   ))}
               </div>
+            </div>
+          </div>
+
+          {/* Tambahkan ini setelah System Configuration */}
+          <div className="bg-white rounded-xl shadow border border-gray-100 overflow-hidden mt-4 sm:mt-6">
+            <div className="p-4 sm:p-6 border-b border-gray-200">
+              <h3 className="font-bold text-gray-900 flex items-center gap-2 text-sm sm:text-base">
+                Pengaturan Tampilan
+              </h3>
+              <p className="text-sm text-gray-600 mt-1">
+                Atur informasi yang ditampilkan ke peserta
+              </p>
+            </div>
+            <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+              {configs
+                .filter(
+                  (c) =>
+                    c.config_key.includes('_display') ||
+                    c.config_key.includes('location') ||
+                    c.config_key.includes('contact_')
+                )
+                .map((config) => (
+                  <div
+                    key={config.id}
+                    className="flex flex-col md:grid md:grid-cols-3 gap-4 sm:gap-6 items-center"
+                  >
+                    <div>
+                      <label className="block font-medium text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base">
+                        {config.label}
+                      </label>
+                      <p className="text-xs sm:text-sm text-gray-500">
+                        {config.description}
+                      </p>
+                    </div>
+                    <div>
+                      <input
+                        type="text"
+                        value={config.config_value}
+                        onChange={(e) =>
+                          handleChange(config.id, e.target.value)
+                        }
+                        className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm sm:text-base"
+                        placeholder={`Masukkan ${config.label}`}
+                      />
+                    </div>
+                    <div className="text-xs sm:text-sm text-gray-600">
+                      <div className="font-medium">
+                        Tipe: Informasi Tampilan
+                      </div>
+                      <div className="inline-flex items-center gap-1 px-2 py-1 rounded mt-1 bg-purple-100 text-purple-800">
+                        {config.config_key.includes('display')
+                          ? 'Display'
+                          : config.config_key.includes('contact')
+                            ? 'Kontak'
+                            : 'Lokasi'}
+                      </div>
+                    </div>
+                  </div>
+                ))}
             </div>
           </div>
 

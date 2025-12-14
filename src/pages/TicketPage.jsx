@@ -20,6 +20,7 @@ import {
   Eye,
   X,
   ZoomIn,
+  Phone,
 } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -30,6 +31,42 @@ export default function TicketPage() {
   const [loading, setLoading] = useState(true);
   const [votingAvailability, setVotingAvailability] = useState(null);
   const [showQRModal, setShowQRModal] = useState(false);
+  const [eventConfig, setEventConfig] = useState({
+    event_date_display: 'Tanggal belum ditentukan',
+    event_time_display: 'Waktu belum ditentukan',
+    event_location: 'Lokasi belum ditentukan',
+    contact_phone: 'Kontak belum tersedia',
+    contact_email: 'Email belum tersedia',
+  });
+
+  const fetchEventConfig = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('event_config')
+        .select('config_key, config_value')
+        .eq('is_active', true)
+        .in('config_key', [
+          'event_date_display',
+          'event_time_display',
+          'event_location',
+          'contact_phone',
+          'contact_email',
+        ]);
+
+      if (error) throw error;
+
+      if (data) {
+        const configMap = {};
+        data.forEach((item) => {
+          configMap[item.config_key] = item.config_value;
+        });
+        setEventConfig((prev) => ({ ...prev, ...configMap }));
+      }
+    } catch (error) {
+      console.error('Error fetching event config:', error);
+      // Tetap gunakan nilai default jika terjadi error
+    }
+  }, []);
 
   const fetchParticipant = useCallback(async () => {
     const savedNim = localStorage.getItem('musma_nim');
@@ -41,11 +78,13 @@ export default function TicketPage() {
     }
 
     try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('nim', savedNim)
-        .single();
+      // Fetch participant dan event config secara paralel
+      const [participantResponse] = await Promise.all([
+        supabase.from('users').select('*').eq('nim', savedNim).single(),
+        fetchEventConfig(),
+      ]);
+
+      const { data, error } = participantResponse;
 
       if (error || !data) {
         throw new Error('Data tidak ditemukan');
@@ -62,7 +101,7 @@ export default function TicketPage() {
     } finally {
       setLoading(false);
     }
-  }, [navigate]);
+  }, [navigate, fetchEventConfig]);
 
   useEffect(() => {
     fetchParticipant();
@@ -93,7 +132,7 @@ export default function TicketPage() {
       message: participant.sudah_vote
         ? 'Terima kasih telah menggunakan hak suara Anda'
         : !participant.status_kehadiran
-          ? 'Check-in dulu di venue' 
+          ? 'Check-in dulu di venue'
           : votingAvailability.message,
     };
   };
@@ -361,7 +400,6 @@ export default function TicketPage() {
                         Masuk Bilik Suara
                       </button>
                     )}
-
                   </div>
                 </div>
               </div>
@@ -382,7 +420,7 @@ export default function TicketPage() {
                         Tanggal
                       </div>
                       <div className="text-gray-800 text-sm sm:text-base">
-                        Sabtu, 20 Desember 2025
+                        {eventConfig.event_date_display}
                       </div>
                     </div>
                   </div>
@@ -393,7 +431,7 @@ export default function TicketPage() {
                         Waktu
                       </div>
                       <div className="text-gray-800 text-sm sm:text-base">
-                        08:00 - 15:00 WIB
+                        {eventConfig.event_time_display}
                       </div>
                     </div>
                   </div>
@@ -404,7 +442,7 @@ export default function TicketPage() {
                         Lokasi
                       </div>
                       <div className="text-gray-800 text-sm sm:text-base">
-                        Auditorium UBP Karawang
+                        {eventConfig.event_location}
                       </div>
                     </div>
                   </div>
@@ -450,16 +488,24 @@ export default function TicketPage() {
                   Bantuan
                 </h3>
                 <div className="space-y-2 text-xs sm:text-sm">
-                  <div>
-                    <div className="font-medium text-gray-700">
-                      Panitia MUSMA:
+                  <div className="flex items-start gap-2">
+                    <Phone className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <div className="font-medium text-gray-700">
+                        Panitia MUSMA:
+                      </div>
+                      <div className="text-gray-600">
+                        {eventConfig.contact_phone}
+                      </div>
                     </div>
-                    <div className="text-gray-600">0857-XXXX-XXXX</div>
                   </div>
-                  <div>
-                    <div className="font-medium text-gray-700">Email:</div>
-                    <div className="text-gray-600 break-words">
-                      himatif@ubpkarawang.ac.id
+                  <div className="flex items-start gap-2">
+                    <Mail className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <div className="font-medium text-gray-700">Email:</div>
+                      <div className="text-gray-600 break-words">
+                        {eventConfig.contact_email}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -534,12 +580,18 @@ export default function TicketPage() {
                             body { font-family: Arial, sans-serif; padding: 20px; text-align: center; }
                             .ticket { max-width: 300px; margin: 0 auto; }
                             .qr-code { margin: 20px 0; }
+                            .event-info { margin: 10px 0; font-size: 14px; color: #666; }
                             @media print { .no-print { display: none; } }
                           </style>
                         </head>
                         <body>
                           <div class="ticket">
                             <h2>TIKET MUSMA</h2>
+                            <div class="event-info">
+                              <p><strong>${eventConfig.event_date_display}</strong></p>
+                              <p>${eventConfig.event_time_display}</p>
+                              <p>${eventConfig.event_location}</p>
+                            </div>
                             <p><strong>${participant.nama}</strong></p>
                             <p>${participant.nim}</p>
                             <p>${participant.kelas}</p>
@@ -547,6 +599,10 @@ export default function TicketPage() {
                               <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${participant.id}" alt="QR Code">
                             </div>
                             <p><em>Tunjukkan QR code ini saat check-in</em></p>
+                            <p class="contact-info">
+                              Panitia: ${eventConfig.contact_phone}<br/>
+                              Email: ${eventConfig.contact_email}
+                            </p>
                           </div>
                           <div class="no-print">
                             <button onclick="window.print()">Cetak</button>
