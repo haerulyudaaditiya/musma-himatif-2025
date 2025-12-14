@@ -71,7 +71,6 @@ export default function VoterList({ show, onClose }) {
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div>
             <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <Users className="w-6 h-6 text-blue-600" />
               Daftar Peserta
             </h2>
             <p className="text-gray-600">

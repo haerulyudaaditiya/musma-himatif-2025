@@ -222,7 +222,6 @@ export default function QuickCountPage() {
 
               {isAdmin && (
                 <div className="hidden sm:inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium">
-                  <Shield className="w-3 h-3" />
                   Admin
                 </div>
               )}

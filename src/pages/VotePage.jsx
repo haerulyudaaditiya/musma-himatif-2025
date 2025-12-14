@@ -272,7 +272,6 @@ export default function VotePage() {
           {/* Keamanan & Kerahasiaan Banner */}
           <div className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4">
             <div className="flex items-start gap-3">
-              <Shield className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
               <div>
                 <h3 className="font-bold text-blue-800 text-sm mb-1">
                   Keamanan & Kerahasiaan Pemilihan
