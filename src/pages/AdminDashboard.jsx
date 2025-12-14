@@ -428,6 +428,29 @@ export default function AdminDashboard() {
                 Kelola Pengaturan →
               </div>
             </button>
+
+            {/* Manage Candidates */}
+            <button
+              onClick={() => navigate('/admin/candidates')}
+              className="bg-white rounded-xl shadow border border-gray-100 p-4 sm:p-6 text-left hover:shadow-lg transition-all hover:-translate-y-0.5 sm:hover:-translate-y-1 group"
+            >
+              <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
+                <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-purple-100 flex items-center justify-center group-hover:bg-purple-200 transition flex-shrink-0">
+                  <UserCheck className="w-4 h-4 sm:w-6 sm:h-6 text-purple-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-gray-900 text-sm sm:text-base truncate">
+                    Kelola Kandidat
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-600 truncate">
+                    Tambah/edit data calon ketua
+                  </p>
+                </div>
+              </div>
+              <div className="text-purple-600 font-medium flex items-center gap-1 text-xs sm:text-sm">
+                Buka Kelola →
+              </div>
+            </button>
           </div>
 
           {/* Recent Activity */}

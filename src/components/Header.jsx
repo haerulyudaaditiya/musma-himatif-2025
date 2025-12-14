@@ -155,7 +155,7 @@ export default function Header() {
                 <div className="relative" ref={adminDropdownRef}>
                   <button
                     onClick={() => setShowAdminDropdown(!showAdminDropdown)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 border border-blue-200 transition"
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition"
                   >
                     <span className="font-medium">{adminName}</span>
                     <ChevronDown
