@@ -9,7 +9,6 @@ import {
   BarChart3,
   Settings,
   QrCode,
-  LogOut,
   Calendar,
   Clock,
   TrendingUp,
@@ -17,6 +16,8 @@ import {
   UserCheck,
   Shield,
 } from 'lucide-react';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -28,7 +29,6 @@ export default function AdminDashboard() {
     votingRate: 0,
   });
   const [loading, setLoading] = useState(true);
-  const [recentActivity, setRecentActivity] = useState([]);
   const [systemStatus, setSystemStatus] = useState('loading');
 
   // Cek session admin
@@ -63,21 +63,6 @@ export default function AdminDashboard() {
         .from('candidates')
         .select('id');
 
-      // 3. Recent votes (last 5)
-      const { data: recentVotes } = await supabase
-        .from('votes')
-        .select(
-          `
-          id,
-          created_at,
-          voter_name,
-          voter_class,
-          candidates (nama, no_urut)
-        `
-        )
-        .order('created_at', { ascending: false })
-        .limit(5);
-
       // 4. System config
       const { data: configs } = await supabase
         .from('event_config')
@@ -91,8 +76,6 @@ export default function AdminDashboard() {
         totalCandidates: candidates?.length || 0,
         votingRate: parseFloat(votingRate),
       });
-
-      setRecentActivity(recentVotes || []);
 
       // Determine system status
       if (configs) {
@@ -158,14 +141,6 @@ export default function AdminDashboard() {
     };
   }, [fetchDashboardData]);
 
-  const handleLogout = () => {
-    if (window.confirm('Keluar dari Mode Admin?')) {
-      localStorage.removeItem('musma_admin_session');
-      showToast.info('Anda telah logout dari admin');
-      navigate('/');
-    }
-  };
-
   const getSystemStatusColor = () => {
     switch (systemStatus) {
       case 'active':
@@ -210,303 +185,307 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-              <Shield className="w-7 h-7 text-blue-600" />
-              Admin Dashboard
-            </h1>
-            <p className="text-gray-600">
-              Panel kontrol sistem voting MUSMA 2024
-            </p>
-          </div>
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 flex flex-col">
+      <Header />
+      <div className="flex-1">
+        <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-6xl">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-8 gap-4">
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
+                Admin Dashboard
+              </h1>
+              <p className="text-gray-600 text-sm sm:text-base">
+                Panel kontrol sistem voting MUSMA 2025
+              </p>
+            </div>
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate('/results')}
-              className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition flex items-center gap-2"
-            >
-              <BarChart3 className="w-4 h-4" />
-              Quick Count
-            </button>
-            <button
-              onClick={handleLogout}
-              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition flex items-center gap-2"
-            >
-              <LogOut className="w-4 h-4" />
-              Logout
-            </button>
-          </div>
-        </div>
-
-        {/* System Status Banner */}
-        <div
-          className={`${getSystemStatusColor()} text-white rounded-xl p-6 mb-8 shadow-lg`}
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
-                {systemStatus === 'active' ? (
-                  <CheckCircle className="w-6 h-6" />
-                ) : (
-                  <AlertCircle className="w-6 h-6" />
-                )}
-              </div>
-              <div>
-                <h2 className="text-xl font-bold">{getSystemStatusText()}</h2>
-                <p className="opacity-90">
-                  Pantau dan kelola sistem voting secara real-time
-                </p>
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="text-2xl font-bold">
-                {stats.checkedIn}/{stats.totalParticipants}
-              </div>
-              <div className="text-sm opacity-90">Peserta Check-in</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {/* Total Participants */}
-          <div className="bg-white rounded-xl shadow border border-gray-100 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="text-gray-600">Total Peserta</div>
-              <Users className="w-5 h-5 text-blue-600" />
-            </div>
-            <div className="text-3xl font-bold text-gray-900">
-              {stats.totalParticipants}
-            </div>
-            <div className="text-sm text-gray-500">Terdaftar di sistem</div>
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Check-in</span>
-                <span className="font-medium">{stats.checkedIn} orang</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
-                <div
-                  className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-blue-600"
-                  style={{
-                    width: `${(stats.checkedIn / Math.max(stats.totalParticipants, 1)) * 100}%`,
-                  }}
-                ></div>
-              </div>
-            </div>
-          </div>
-
-          {/* Voting Stats */}
-          <div className="bg-white rounded-xl shadow border border-gray-100 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="text-gray-600">Status Voting</div>
-              <Vote className="w-5 h-5 text-green-600" />
-            </div>
-            <div className="text-3xl font-bold text-gray-900">
-              {stats.voted}
-            </div>
-            <div className="text-sm text-gray-500">suara masuk</div>
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Tingkat Partisipasi</span>
-                <span className="font-medium">{stats.votingRate}%</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
-                <div
-                  className="h-2 rounded-full bg-gradient-to-r from-green-500 to-emerald-500"
-                  style={{ width: `${stats.votingRate}%` }}
-                ></div>
-              </div>
-            </div>
-          </div>
-
-          {/* Candidates */}
-          <div className="bg-white rounded-xl shadow border border-gray-100 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="text-gray-600">Kandidat</div>
-              <UserCheck className="w-5 h-5 text-purple-600" />
-            </div>
-            <div className="text-3xl font-bold text-gray-900">
-              {stats.totalCandidates}
-            </div>
-            <div className="text-sm text-gray-500">calon yang bertanding</div>
-            <div className="mt-4 pt-4 border-t border-gray-200">
+            <div className="flex items-center gap-2 self-end sm:self-auto">
               <button
                 onClick={() => navigate('/results')}
-                className="w-full py-2 bg-gradient-to-r from-purple-50 to-purple-100 text-purple-700 rounded-lg hover:from-purple-100 hover:to-purple-200 transition flex items-center justify-center gap-2"
+                className="px-3 py-2 sm:px-4 sm:py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition flex items-center gap-1 sm:gap-2 text-sm sm:text-base"
               >
-                <TrendingUp className="w-4 h-4" />
-                Lihat Peringkat
+                <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Quick Count</span>
+                <span className="sm:hidden">Hasil</span>
               </button>
             </div>
           </div>
 
-          {/* System Info */}
-          <div className="bg-white rounded-xl shadow border border-gray-100 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="text-gray-600">Waktu Server</div>
-              <Clock className="w-5 h-5 text-amber-600" />
-            </div>
-            <div className="text-2xl font-bold text-gray-900 font-mono">
-              {new Date().toLocaleTimeString('id-ID', {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            </div>
-            <div className="text-sm text-gray-500">
-              {new Date().toLocaleDateString('id-ID', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              })}
-            </div>
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <div className="text-xs text-gray-500">
-                Data diperbarui real-time
+          {/* System Status Banner */}
+          <div
+            className={`${getSystemStatusColor()} text-white rounded-xl sm:rounded-xl p-4 sm:p-6 mb-4 sm:mb-8 shadow-lg`}
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                  {systemStatus === 'active' ? (
+                    <CheckCircle className="w-4 h-4 sm:w-6 sm:h-6" />
+                  ) : (
+                    <AlertCircle className="w-4 h-4 sm:w-6 sm:h-6" />
+                  )}
+                </div>
+                <div>
+                  <h2 className="text-base sm:text-xl font-bold">
+                    {getSystemStatusText()}
+                  </h2>
+                  <p className="opacity-90 text-xs sm:text-sm">
+                    Pantau dan kelola sistem voting secara real-time
+                  </p>
+                </div>
+              </div>
+              <div className="text-left sm:text-right">
+                <div className="text-lg sm:text-2xl font-bold">
+                  {stats.checkedIn}/{stats.totalParticipants}
+                </div>
+                <div className="text-xs sm:text-sm opacity-90">
+                  Peserta Check-in
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Action Cards */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
-          {/* Scan QR */}
-          <button
-            onClick={() => navigate('/admin/scan')}
-            className="bg-white rounded-xl shadow border border-gray-100 p-6 text-left hover:shadow-lg transition-all hover:-translate-y-1 group"
-          >
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center group-hover:bg-blue-200 transition">
-                <QrCode className="w-6 h-6 text-blue-600" />
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-4 sm:mb-8">
+            {/* Total Participants */}
+            <div className="bg-white rounded-xl shadow border border-gray-100 p-3 sm:p-6">
+              <div className="flex items-center justify-between mb-2 sm:mb-4">
+                <div className="text-gray-600 text-xs sm:text-sm">
+                  Total Peserta
+                </div>
+                <Users className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
               </div>
-              <div>
-                <h3 className="font-bold text-gray-900">Scan Presensi</h3>
-                <p className="text-sm text-gray-600">
-                  Check-in peserta dengan QR code
-                </p>
+              <div className="text-xl sm:text-3xl font-bold text-gray-900">
+                {stats.totalParticipants}
+              </div>
+              <div className="text-xs sm:text-sm text-gray-500">
+                Terdaftar di sistem
+              </div>
+              <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-200">
+                <div className="flex justify-between text-xs sm:text-sm">
+                  <span className="text-gray-600">Check-in</span>
+                  <span className="font-medium">{stats.checkedIn} orang</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-1.5 sm:h-2 mt-1">
+                  <div
+                    className="h-1.5 sm:h-2 rounded-full bg-gradient-to-r from-blue-500 to-blue-600"
+                    style={{
+                      width: `${(stats.checkedIn / Math.max(stats.totalParticipants, 1)) * 100}%`,
+                    }}
+                  ></div>
+                </div>
               </div>
             </div>
-            <div className="text-blue-600 font-medium flex items-center gap-1">
-              Buka Scanner →
-            </div>
-          </button>
 
-          {/* Quick Count */}
-          <button
-            onClick={() => navigate('/results')}
-            className="bg-white rounded-xl shadow border border-gray-100 p-6 text-left hover:shadow-lg transition-all hover:-translate-y-1 group"
-          >
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center group-hover:bg-green-200 transition">
-                <BarChart3 className="w-6 h-6 text-green-600" />
+            {/* Voting Stats */}
+            <div className="bg-white rounded-xl shadow border border-gray-100 p-3 sm:p-6">
+              <div className="flex items-center justify-between mb-2 sm:mb-4">
+                <div className="text-gray-600 text-xs sm:text-sm">
+                  Status Voting
+                </div>
+                <Vote className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
               </div>
-              <div>
-                <h3 className="font-bold text-gray-900">Quick Count</h3>
-                <p className="text-sm text-gray-600">
-                  Lihat hasil voting real-time
-                </p>
+              <div className="text-xl sm:text-3xl font-bold text-gray-900">
+                {stats.voted}
+              </div>
+              <div className="text-xs sm:text-sm text-gray-500">
+                suara masuk
+              </div>
+              <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-200">
+                <div className="flex justify-between text-xs sm:text-sm">
+                  <span className="text-gray-600">Tingkat Partisipasi</span>
+                  <span className="font-medium">{stats.votingRate}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-1.5 sm:h-2 mt-1">
+                  <div
+                    className="h-1.5 sm:h-2 rounded-full bg-gradient-to-r from-green-500 to-emerald-500"
+                    style={{ width: `${stats.votingRate}%` }}
+                  ></div>
+                </div>
               </div>
             </div>
-            <div className="text-green-600 font-medium flex items-center gap-1">
-              Lihat Hasil →
-            </div>
-          </button>
 
-          {/* Configuration */}
-          <button
-            onClick={() => navigate('/admin/config')}
-            className="bg-white rounded-xl shadow border border-gray-100 p-6 text-left hover:shadow-lg transition-all hover:-translate-y-1 group"
-          >
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center group-hover:bg-amber-200 transition">
-                <Settings className="w-6 h-6 text-amber-600" />
+            {/* Candidates */}
+            <div className="bg-white rounded-xl shadow border border-gray-100 p-3 sm:p-6">
+              <div className="flex items-center justify-between mb-2 sm:mb-4">
+                <div className="text-gray-600 text-xs sm:text-sm">Kandidat</div>
+                <UserCheck className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
               </div>
-              <div>
-                <h3 className="font-bold text-gray-900">Konfigurasi</h3>
-                <p className="text-sm text-gray-600">
-                  Atur waktu dan pengaturan sistem
-                </p>
+              <div className="text-xl sm:text-3xl font-bold text-gray-900">
+                {stats.totalCandidates}
               </div>
-            </div>
-            <div className="text-amber-600 font-medium flex items-center gap-1">
-              Kelola Pengaturan →
-            </div>
-          </button>
-        </div>
-
-        {/* Recent Activity */}
-        <div className="bg-white rounded-xl shadow border border-gray-100 overflow-hidden">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="font-bold text-gray-900 flex items-center gap-2">
-              <Clock className="w-5 h-5 text-blue-600" />
-              Aktivitas Terbaru
-            </h2>
-            <p className="text-sm text-gray-600">
-              5 voting terakhir yang terekam
-            </p>
-          </div>
-
-          <div className="divide-y divide-gray-200">
-            {recentActivity.length > 0 ? (
-              recentActivity.map((activity) => (
-                <div
-                  key={activity.id}
-                  className="p-6 hover:bg-gray-50 transition"
+              <div className="text-xs sm:text-sm text-gray-500">
+                calon yang bertanding
+              </div>
+              <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-200">
+                <button
+                  onClick={() => navigate('/results')}
+                  className="w-full py-1.5 sm:py-2 bg-gradient-to-r from-purple-50 to-purple-100 text-purple-700 rounded-lg hover:from-purple-100 hover:to-purple-200 transition flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm"
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-100 to-indigo-100 flex items-center justify-center">
-                        <Vote className="w-5 h-5 text-blue-600" />
-                      </div>
-                      <div>
-                        <div className="font-medium text-gray-900">
-                          {activity.voter_name} ({activity.voter_class})
-                        </div>
-                        <div className="text-sm text-gray-600">
-                          Memilih{' '}
-                          <span className="font-semibold">
-                            {activity.candidates?.nama}
-                          </span>{' '}
-                          (No. {activity.candidates?.no_urut})
-                        </div>
-                      </div>
+                  <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />
+                  Lihat Peringkat
+                </button>
+              </div>
+            </div>
+
+            {/* System Info */}
+            <div className="bg-white rounded-xl shadow border border-gray-100 p-3 sm:p-6">
+              <div className="flex items-center justify-between mb-2 sm:mb-4">
+                <div className="text-gray-600 text-xs sm:text-sm">
+                  Waktu Server
+                </div>
+                <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600" />
+              </div>
+              <div className="text-lg sm:text-2xl font-bold text-gray-900 font-mono">
+                {new Date().toLocaleTimeString('id-ID', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </div>
+              <div className="text-xs sm:text-sm text-gray-500 truncate">
+                {new Date().toLocaleDateString('id-ID', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                })}
+              </div>
+              <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-200">
+                <div className="text-xs text-gray-500">
+                  Data diperbarui real-time
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Cards */}
+          <div className="grid md:grid-cols-3 gap-3 sm:gap-6 mb-4 sm:mb-8">
+            {/* Scan QR */}
+            <button
+              onClick={() => navigate('/admin/scan')}
+              className="bg-white rounded-xl shadow border border-gray-100 p-4 sm:p-6 text-left hover:shadow-lg transition-all hover:-translate-y-0.5 sm:hover:-translate-y-1 group"
+            >
+              <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
+                <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-blue-100 flex items-center justify-center group-hover:bg-blue-200 transition flex-shrink-0">
+                  <QrCode className="w-4 h-4 sm:w-6 sm:h-6 text-blue-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-gray-900 text-sm sm:text-base truncate">
+                    Scan Presensi
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-600 truncate">
+                    Check-in peserta dengan QR code
+                  </p>
+                </div>
+              </div>
+              <div className="text-blue-600 font-medium flex items-center gap-1 text-xs sm:text-sm">
+                Buka Scanner →
+              </div>
+            </button>
+
+            {/* Quick Count */}
+            <button
+              onClick={() => navigate('/results')}
+              className="bg-white rounded-xl shadow border border-gray-100 p-4 sm:p-6 text-left hover:shadow-lg transition-all hover:-translate-y-0.5 sm:hover:-translate-y-1 group"
+            >
+              <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
+                <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-green-100 flex items-center justify-center group-hover:bg-green-200 transition flex-shrink-0">
+                  <BarChart3 className="w-4 h-4 sm:w-6 sm:h-6 text-green-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-gray-900 text-sm sm:text-base truncate">
+                    Quick Count
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-600 truncate">
+                    Lihat hasil voting real-time
+                  </p>
+                </div>
+              </div>
+              <div className="text-green-600 font-medium flex items-center gap-1 text-xs sm:text-sm">
+                Lihat Hasil →
+              </div>
+            </button>
+
+            {/* Configuration */}
+            <button
+              onClick={() => navigate('/admin/config')}
+              className="bg-white rounded-xl shadow border border-gray-100 p-4 sm:p-6 text-left hover:shadow-lg transition-all hover:-translate-y-0.5 sm:hover:-translate-y-1 group"
+            >
+              <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
+                <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-amber-100 flex items-center justify-center group-hover:bg-amber-200 transition flex-shrink-0">
+                  <Settings className="w-4 h-4 sm:w-6 sm:h-6 text-amber-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-gray-900 text-sm sm:text-base truncate">
+                    Konfigurasi
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-600 truncate">
+                    Atur waktu dan pengaturan sistem
+                  </p>
+                </div>
+              </div>
+              <div className="text-amber-600 font-medium flex items-center gap-1 text-xs sm:text-sm">
+                Kelola Pengaturan →
+              </div>
+            </button>
+          </div>
+
+          {/* Recent Activity */}
+          {/* Recent Activity - Modified */}
+          <div className="bg-white rounded-xl shadow border border-gray-100 overflow-hidden">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="font-bold text-gray-900 flex items-center gap-2">
+                <Clock className="w-5 h-5 text-blue-600" />
+                Aktivitas Sistem
+              </h2>
+              <p className="text-sm text-gray-600">
+                Statistik voting real-time
+              </p>
+            </div>
+
+            <div className="p-6">
+              <div className="space-y-4">
+                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <div className="text-sm text-gray-600">
+                      Total Vote Masuk
                     </div>
-                    <div className="text-right">
-                      <div className="text-sm text-gray-600">
-                        {new Date(activity.created_at).toLocaleTimeString(
-                          'id-ID',
-                          {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            second: '2-digit',
-                          }
-                        )}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {new Date(activity.created_at).toLocaleDateString(
-                          'id-ID'
-                        )}
-                      </div>
+                    <div className="text-2xl font-bold text-gray-900">
+                      {stats.voted}
                     </div>
                   </div>
+                  <TrendingUp className="w-8 h-8 text-green-600" />
                 </div>
-              ))
-            ) : (
-              <div className="p-12 text-center">
-                <Vote className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-gray-900 mb-2">
-                  Belum Ada Aktivitas
-                </h3>
-                <p className="text-gray-600">Tidak ada voting yang terekam</p>
+
+                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <div className="text-sm text-gray-600">
+                      Waktu Update Terakhir
+                    </div>
+                    <div className="text-lg font-bold text-gray-900 font-mono">
+                      {new Date().toLocaleTimeString('id-ID', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                      })}
+                    </div>
+                  </div>
+                  <Clock className="w-8 h-8 text-blue-600" />
+                </div>
+
+                <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-100">
+                  <p className="text-xs text-blue-700">
+                    <strong>Prinsip Kerahasiaan:</strong>
+                    <br />
+                    Data voting tidak mencatat identitas pemilih
+                  </p>
+                </div>
               </div>
-            )}
+            </div>
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

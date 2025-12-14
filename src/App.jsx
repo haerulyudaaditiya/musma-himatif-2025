@@ -1,135 +1,128 @@
-// App.js
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
-import HomePage from './pages/HomePage';
-import RegisterPage from './pages/RegisterPage';
-import TicketPage from './pages/TicketPage';
-import VotePage from './pages/VotePage';
-import QuickCountPage from './pages/QuickCountPage';
-import AdminLoginPage from './pages/AdminLoginPage';
-import AdminDashboard from './pages/AdminDashboard';
-import AdminConfigPage from './pages/AdminConfigPage';
-import ScanPage from './pages/ScanPage';
-import NotFoundPage from './pages/NotFoundPage';
+  import {
+    BrowserRouter as Router,
+    Routes,
+    Route,
+    Navigate,
+  } from 'react-router-dom';
+  import { Toaster } from 'react-hot-toast';
+  import RegisterPage from './pages/RegisterPage';
+  import TicketPage from './pages/TicketPage';
+  import VotePage from './pages/VotePage';
+  import QuickCountPage from './pages/QuickCountPage';
+  import AdminLoginPage from './pages/AdminLoginPage';
+  import AdminDashboard from './pages/AdminDashboard';
+  import AdminConfigPage from './pages/AdminConfigPage';
+  import ScanPage from './pages/ScanPage';
+  import NotFoundPage from './pages/NotFoundPage';
 
-// Protected Route untuk halaman yang butuh login user
-const UserProtectedRoute = ({ children }) => {
-  const nim = localStorage.getItem('musma_nim');
-  return nim ? children : <Navigate to="/" replace />;
-};
+  // Protected Route untuk halaman yang butuh login user
+  const UserProtectedRoute = ({ children }) => {
+    const nim = localStorage.getItem('musma_nim');
+    return nim ? children : <Navigate to="/" replace />;
+  };
 
-// Protected Route untuk halaman admin
-const AdminProtectedRoute = ({ children }) => {
-  const isAdmin = localStorage.getItem('musma_admin_session');
-  return isAdmin ? children : <Navigate to="/admin/login" replace />;
-};
+  // Protected Route untuk halaman admin
+  const AdminProtectedRoute = ({ children }) => {
+    const isAdmin = localStorage.getItem('musma_admin_session');
+    return isAdmin ? children : <Navigate to="/admin/login" replace />;
+  };
 
-function App() {
-  return (
-    <Router>
-      <div className="App">
-        <Toaster
-          position="top-right"
-          toastOptions={{
-            duration: 3000,
-            style: {
-              background: '#363636',
-              color: '#fff',
-            },
-            success: {
+  function App() {
+    return (
+      <Router>
+        <div className="App">
+          <Toaster
+            position="top-right"
+            toastOptions={{
               duration: 3000,
               style: {
-                background: '#10B981',
+                background: '#363636',
+                color: '#fff',
               },
-            },
-            error: {
-              duration: 4000,
-              style: {
-                background: '#EF4444',
+              success: {
+                duration: 3000,
+                style: {
+                  background: '#10B981',
+                },
               },
-            },
-            loading: {
-              style: {
-                background: '#6B7280',
+              error: {
+                duration: 4000,
+                style: {
+                  background: '#EF4444',
+                },
               },
-            },
-          }}
-        />
-
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<HomePage />} />
-          <Route path="/register" element={<RegisterPage />} />
-
-          {/* User Protected Routes */}
-          <Route
-            path="/ticket"
-            element={
-              <UserProtectedRoute>
-                <TicketPage />
-              </UserProtectedRoute>
-            }
+              loading: {
+                style: {
+                  background: '#6B7280',
+                },
+              },
+            }}
           />
 
-          <Route
-            path="/vote"
-            element={
-              <UserProtectedRoute>
-                <VotePage />
-              </UserProtectedRoute>
-            }
-          />
+          <Routes>
+            {/* Root langsung ke register */}
+            <Route path="/" element={<Navigate to="/register" replace />} />
 
-          <Route
-            path="/results"
-            element={
-              <UserProtectedRoute>
-                <QuickCountPage />
-              </UserProtectedRoute>
-            }
-          />
+            {/* Public Routes */}
+            <Route path="/register" element={<RegisterPage />} />
 
-          {/* Admin Routes */}
-          <Route path="/admin/login" element={<AdminLoginPage />} />
+            {/* User Protected Routes */}
+            <Route
+              path="/ticket"
+              element={
+                <UserProtectedRoute>
+                  <TicketPage />
+                </UserProtectedRoute>
+              }
+            />
 
-          <Route
-            path="/admin/dashboard"
-            element={
-              <AdminProtectedRoute>
-                <AdminDashboard />
-              </AdminProtectedRoute>
-            }
-          />
+            <Route
+              path="/vote"
+              element={
+                <UserProtectedRoute>
+                  <VotePage />
+                </UserProtectedRoute>
+              }
+            />
 
-          <Route
-            path="/admin/config"
-            element={
-              <AdminProtectedRoute>
-                <AdminConfigPage />
-              </AdminProtectedRoute>
-            }
-          />
+            <Route path="/results" element={<QuickCountPage />} />
 
-          <Route
-            path="/admin/scan"
-            element={
-              <AdminProtectedRoute>
-                <ScanPage />
-              </AdminProtectedRoute>
-            }
-          />
+            {/* Admin Routes */}
+            <Route path="/admin/login" element={<AdminLoginPage />} />
 
-          {/* 404 Not Found */}
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
-      </div>
-    </Router>
-  );
-}
+            <Route
+              path="/admin/dashboard"
+              element={
+                <AdminProtectedRoute>
+                  <AdminDashboard />
+                </AdminProtectedRoute>
+              }
+            />
 
-export default App;
+            <Route
+              path="/admin/config"
+              element={
+                <AdminProtectedRoute>
+                  <AdminConfigPage />
+                </AdminProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/scan"
+              element={
+                <AdminProtectedRoute>
+                  <ScanPage />
+                </AdminProtectedRoute>
+              }
+            />
+
+            {/* 404 Not Found */}
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </div>
+      </Router>
+    );
+  }
+
+  export default App;

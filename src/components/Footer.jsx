@@ -9,7 +9,7 @@ export default function Footer() {
             © {currentYear} MUSMA HIMATIF UBP Karawang
           </p>
           <p className="text-xs text-gray-400">
-            Sistem E-Voting Terpercaya • Hak Cipta Dilindungi
+            Sistem E-Voting
           </p>
         </div>
       </div>

@@ -4,6 +4,7 @@ import { showToast } from '../libs/toast';
 import { X, Users, CheckCircle, XCircle, Search, Filter } from 'lucide-react';
 
 export default function VoterList({ show, onClose }) {
+  const isAdmin = localStorage.getItem('musma_admin_session');
   const [voters, setVoters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -50,7 +51,18 @@ export default function VoterList({ show, onClose }) {
       voter.kelas.toLowerCase().includes(search.toLowerCase())
   );
 
+  useEffect(() => {
+    if (show && !isAdmin) {
+      showToast.error('Akses ditolak. Hanya admin yang boleh melihat detail.');
+      onClose();
+    }
+  }, [show, isAdmin, onClose]);
+
   if (!show) return null;
+
+  if (!isAdmin) {
+    return null; // Jangan render apa-apa
+  }
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
