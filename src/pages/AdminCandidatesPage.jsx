@@ -16,6 +16,7 @@ import {
   AlertCircle,
   CheckCircle,
   Image,
+  Eye,
 } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -31,6 +32,15 @@ export default function AdminCandidatesPage() {
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const [deletingProcessing, setDeletingProcessing] = useState(false);
+  const [imageModalOpen, setImageModalOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState('');
+  const [selectedName, setSelectedName] = useState('');
+
+  const openImageModal = (imageUrl, candidateName) => {
+    setSelectedImage(imageUrl);
+    setSelectedName(candidateName);
+    setImageModalOpen(true);
+  };
 
   const [formData, setFormData] = useState({
     no_urut: '',
@@ -86,29 +96,45 @@ export default function AdminCandidatesPage() {
     return true;
   };
 
+  const fileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
   const uploadImage = async () => {
     if (!imageFile) return null;
 
     try {
       const fileExt = imageFile.name.split('.').pop();
-      const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const fileName = `${Date.now()}_${Math.random()
+        .toString(36)
+        .substring(2)}.${fileExt}`;
       const filePath = `candidates/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('musma-assets')
         .upload(filePath, imageFile);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        // Fallback ke base64 jika upload gagal
+        const base64Image = await fileToBase64(imageFile);
+        return base64Image;
+      }
 
       const {
         data: { publicUrl },
       } = supabase.storage.from('musma-assets').getPublicUrl(filePath);
 
       return publicUrl;
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      showToast.error('Gagal mengupload foto');
-      return null;
+    } catch {
+      const name = formData.nama || 'Candidate';
+      return `https://ui-avatars.com/api/?name=${encodeURIComponent(
+        name
+      )}&background=0D8ABC&color=fff&size=256`;
     }
   };
 
@@ -403,11 +429,24 @@ export default function AdminCandidatesPage() {
                       <div className="flex items-center gap-4">
                         <div className="flex-shrink-0">
                           {imagePreview ? (
-                            <img
-                              src={imagePreview}
-                              alt="Preview"
-                              className="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-lg border border-gray-300"
-                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const name = formData.nama || 'Preview Gambar';
+                                openImageModal(imagePreview, name);
+                              }}
+                              className="relative group"
+                            >
+                              <img
+                                src={imagePreview}
+                                alt="Preview"
+                                className="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-lg border border-gray-300 group-hover:opacity-90 transition"
+                              />
+                              {/* Overlay dengan icon eye */}
+                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 rounded-lg flex items-center justify-center transition">
+                                <Eye className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition" />
+                              </div>
+                            </button>
                           ) : (
                             <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
                               <User className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400" />
@@ -553,11 +592,25 @@ export default function AdminCandidatesPage() {
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
                             {candidate.foto_url ? (
-                              <img
-                                src={candidate.foto_url}
-                                alt={candidate.nama}
-                                className="w-10 h-10 rounded-full object-cover"
-                              />
+                              <button
+                                onClick={() =>
+                                  openImageModal(
+                                    candidate.foto_url,
+                                    candidate.nama
+                                  )
+                                }
+                                className="relative group"
+                              >
+                                <img
+                                  src={candidate.foto_url}
+                                  alt={candidate.nama}
+                                  className="w-10 h-10 rounded-full object-cover group-hover:opacity-90 transition"
+                                />
+                                {/* Overlay untuk gambar di tabel */}
+                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 rounded-full flex items-center justify-center transition">
+                                  <Eye className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition" />
+                                </div>
+                              </button>
                             ) : (
                               <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
                                 <User className="w-5 h-5 text-gray-400" />
@@ -651,6 +704,46 @@ export default function AdminCandidatesPage() {
                 >
                   {deletingProcessing ? 'Menghapus...' : 'Ya, Hapus'}
                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Image Modal - tanpa footer */}
+      {imageModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 mb-[env(safe-area-inset-bottom)]">
+          <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col">
+            {/* Header dengan tombol close */}
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200">
+              <div>
+                <h3 className="font-bold text-gray-900 text-lg">
+                  Foto Kandidat
+                </h3>
+                <p className="text-sm text-gray-600">{selectedName}</p>
+              </div>
+              <button
+                onClick={() => setImageModalOpen(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition"
+              >
+                <X className="w-5 h-5 text-gray-600" />
+              </button>
+            </div>
+
+            {/* Image Content saja */}
+            <div className="flex-1 p-4">
+              <div className="h-full flex items-center justify-center">
+                <img
+                  src={selectedImage}
+                  alt={`Foto ${selectedName}`}
+                  className="max-w-full max-h-[70vh] object-contain rounded-lg"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                      selectedName
+                    )}&background=0D8ABC&color=fff&size=512`;
+                  }}
+                />
               </div>
             </div>
           </div>

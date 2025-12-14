@@ -322,8 +322,8 @@ export default function TicketPage() {
                           votingAction.canVote
                             ? 'bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200'
                             : votingAction.status === 'already_voted'
-                              ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200'
-                              : 'bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200'
+                            ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200'
+                            : 'bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200'
                         }`}
                       >
                         <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
@@ -332,8 +332,8 @@ export default function TicketPage() {
                               votingAction.canVote
                                 ? 'bg-green-100 text-green-600'
                                 : votingAction.status === 'already_voted'
-                                  ? 'bg-blue-100 text-blue-600'
-                                  : 'bg-amber-100 text-amber-600'
+                                ? 'bg-blue-100 text-blue-600'
+                                : 'bg-amber-100 text-amber-600'
                             }`}
                           >
                             {votingAction.canVote ? (
@@ -350,15 +350,14 @@ export default function TicketPage() {
                               {votingAction.status === 'already_voted'
                                 ? 'Sudah Menggunakan Hak Suara'
                                 : votingAction.status === 'not_checked_in'
-                                  ? 'Belum Check-in'
-                                  : votingAvailability?.status === 'active'
-                                    ? 'Siap Memilih'
-                                    : votingAvailability?.status === 'too_early'
-                                      ? 'Menunggu Waktu Voting'
-                                      : votingAvailability?.status ===
-                                          'too_late'
-                                        ? 'Voting Ditutup'
-                                        : 'Status Voting'}
+                                ? 'Belum Check-in'
+                                : votingAvailability?.status === 'active'
+                                ? 'Siap Memilih'
+                                : votingAvailability?.status === 'too_early'
+                                ? 'Menunggu Waktu Voting'
+                                : votingAvailability?.status === 'too_late'
+                                ? 'Voting Ditutup'
+                                : 'Status Voting'}
                             </h3>
                             <p className="text-gray-700 text-sm sm:text-base">
                               {votingAction.message}
@@ -516,7 +515,7 @@ export default function TicketPage() {
       </div>
 
       {showQRModal && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 mb-[env(safe-area-inset-bottom)]">
           <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl max-w-sm w-full">
             <div className="p-4 sm:p-6">
               <div className="flex items-center justify-between mb-4">
