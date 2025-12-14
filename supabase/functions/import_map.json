@@ -1,0 +1,6 @@
+{
+  "imports": {
+    "std/http/": "https://deno.land/std@0.168.0/http/",
+    "resend": "https://esm.sh/resend@2.0.0"
+  }
+}
