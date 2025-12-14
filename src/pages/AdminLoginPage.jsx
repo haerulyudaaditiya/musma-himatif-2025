@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../libs/supabaseClient';
 import { showToast } from '../libs/toast';
@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import bcrypt from 'bcryptjs';
 
 export default function AdminLoginPage() {
   const navigate = useNavigate();
@@ -23,6 +24,35 @@ export default function AdminLoginPage() {
     username: '',
     password: '',
   });
+  const [loginAttempts, setLoginAttempts] = useState(0);
+  const [lockUntil, setLockUntil] = useState(null);
+
+  useEffect(() => {
+    const savedAttempts = localStorage.getItem('musma_login_attempts');
+    const savedLockUntil = localStorage.getItem('musma_lock_until');
+
+    if (savedAttempts) {
+      setLoginAttempts(parseInt(savedAttempts));
+    }
+
+    if (savedLockUntil) {
+      setLockUntil(parseInt(savedLockUntil));
+    }
+  }, []);
+
+  const updateLoginAttempts = (attempts) => {
+    setLoginAttempts(attempts);
+    localStorage.setItem('musma_login_attempts', attempts.toString());
+  };
+
+  const updateLockUntil = (timestamp) => {
+    setLockUntil(timestamp);
+    if (timestamp) {
+      localStorage.setItem('musma_lock_until', timestamp.toString());
+    } else {
+      localStorage.removeItem('musma_lock_until');
+    }
+  };
 
   const validateField = (name, value) => {
     let error = '';
@@ -54,6 +84,20 @@ export default function AdminLoginPage() {
   const handleLogin = async (e) => {
     e.preventDefault();
 
+    if (lockUntil && Date.now() < lockUntil) {
+      showToast.error(
+        `Coba lagi dalam ${Math.ceil((lockUntil - Date.now()) / 1000)} detik`
+      );
+      return;
+    }
+
+    if (loginAttempts >= 5) {
+      const lockTime = Date.now() + 15 * 60 * 1000; // 15 menit
+      updateLockUntil(lockTime); 
+      showToast.error('Terlalu banyak percobaan. Coba lagi dalam 15 menit.');
+      return;
+    }
+
     // Final validation
     const newErrors = {
       username: validateField('username', credentials.username),
@@ -70,28 +114,50 @@ export default function AdminLoginPage() {
     setLoading(true);
 
     try {
-      // Cek ke Database - dengan hash password nanti
-      const { data, error } = await supabase
+      const { data: admin, error } = await supabase
         .from('admins')
         .select('*')
         .eq('username', credentials.username)
-        .eq('password', credentials.password) // TODO: Ganti dengan hash
         .single();
 
-      if (error || !data) {
+      if (error || !admin) {
         throw new Error('Username atau Password salah!');
+      }
+
+      if (!admin.password_hash) {
+        throw new Error('Password belum di-hash. Hubungi administrator.');
+      }
+
+      const isValid = await bcrypt.compare(
+        credentials.password,
+        admin.password_hash
+      );
+
+      if (!isValid) {
+        throw new Error('Username atau Password salah!');
+      }
+
+      if (admin.status && admin.status !== 'active') {
+        throw new Error('Akun admin tidak aktif. Hubungi super admin.');
       }
 
       // Login Sukses
       localStorage.setItem('musma_admin_session', 'true');
-      localStorage.setItem('musma_admin_name', data.name || data.username);
+      localStorage.setItem('musma_admin_id', admin.id);
+      localStorage.setItem('musma_admin_name', admin.name || admin.username);
+      localStorage.setItem('musma_admin_role', admin.role || 'admin');
 
-      showToast.success(`Selamat datang, ${data.name || 'Admin'}!`);
+      updateLoginAttempts(0);
+      updateLockUntil(null);
+
+      showToast.success(`Selamat datang, ${admin.name || 'Admin'}!`);
       navigate('/admin/dashboard');
     } catch (error) {
       console.error('Login error:', error);
       showToast.error(error.message || 'Login gagal. Coba lagi.');
+      updateLoginAttempts(loginAttempts + 1);
     } finally {
+      setCredentials({ username: '', password: '' });
       setLoading(false);
     }
   };
@@ -135,7 +201,7 @@ export default function AdminLoginPage() {
                     <input
                       type="text"
                       name="username"
-                      placeholder="admin"
+                      placeholder="Masukan Username"
                       className={`w-full px-3 sm:px-4 py-2 sm:py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm sm:text-base ${
                         errors.username ? 'border-red-500' : 'border-gray-300'
                       }`}
