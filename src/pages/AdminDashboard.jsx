@@ -30,6 +30,15 @@ export default function AdminDashboard() {
   });
   const [loading, setLoading] = useState(true);
   const [systemStatus, setSystemStatus] = useState('loading');
+  const [serverTime, setServerTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setServerTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   // Cek session admin
   useEffect(() => {
@@ -270,7 +279,11 @@ export default function AdminDashboard() {
                   <div
                     className="h-1.5 sm:h-2 rounded-full bg-gradient-to-r from-blue-500 to-blue-600"
                     style={{
-                      width: `${(stats.checkedIn / Math.max(stats.totalParticipants, 1)) * 100}%`,
+                      width: `${
+                        (stats.checkedIn /
+                          Math.max(stats.totalParticipants, 1)) *
+                        100
+                      }%`,
                     }}
                   ></div>
                 </div>
@@ -334,16 +347,20 @@ export default function AdminDashboard() {
                 <div className="text-gray-600 text-xs sm:text-sm">
                   Waktu Server
                 </div>
-                <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600" />
+                <div className="flex items-center gap-1">
+                  <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600" />
+                </div>
               </div>
               <div className="text-lg sm:text-2xl font-bold text-gray-900 font-mono">
-                {new Date().toLocaleTimeString('id-ID', {
+                {serverTime.toLocaleTimeString('id-ID', {
                   hour: '2-digit',
                   minute: '2-digit',
+                  second: '2-digit',
+                  hour12: false,
                 })}
               </div>
               <div className="text-xs sm:text-sm text-gray-500 truncate">
-                {new Date().toLocaleDateString('id-ID', {
+                {serverTime.toLocaleDateString('id-ID', {
                   weekday: 'long',
                   year: 'numeric',
                   month: 'long',
@@ -351,8 +368,12 @@ export default function AdminDashboard() {
                 })}
               </div>
               <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-200">
-                <div className="text-xs text-gray-500">
-                  Data diperbarui real-time
+                <div className="flex items-center justify-between text-xs text-gray-500">
+                  <span>Zone: WIB (GMT+7)</span>
+                  <span className="inline-flex items-center gap-1">
+                    <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+                    Real-time
+                  </span>
                 </div>
               </div>
             </div>
@@ -483,17 +504,29 @@ export default function AdminDashboard() {
                 <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                   <div>
                     <div className="text-sm text-gray-600">
-                      Waktu Update Terakhir
+                      Waktu Server Live
                     </div>
                     <div className="text-lg font-bold text-gray-900 font-mono">
-                      {new Date().toLocaleTimeString('id-ID', {
+                      {serverTime.toLocaleTimeString('id-ID', {
+                        // <-- GANTI new Date() dengan serverTime
                         hour: '2-digit',
                         minute: '2-digit',
                         second: '2-digit',
                       })}
                     </div>
+                    <div className="text-xs text-gray-500">
+                      {serverTime.toLocaleDateString('id-ID', {
+                        // <-- GANTI disini juga
+                        weekday: 'short',
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                      })}
+                    </div>
                   </div>
-                  <Clock className="w-8 h-8 text-blue-600" />
+                  <div className="relative">
+                    <Clock className="w-8 h-8 text-blue-600" />
+                  </div>
                 </div>
 
                 <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-100">
