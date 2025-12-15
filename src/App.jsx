@@ -15,6 +15,7 @@ import AdminConfigPage from './pages/AdminConfigPage';
 import ScanPage from './pages/ScanPage';
 import NotFoundPage from './pages/NotFoundPage';
 import AdminCandidatesPage from './pages/AdminCandidatesPage';
+import AdminProfilePage from './pages/AdminProfilePage';
 
 // Protected Route untuk halaman yang butuh login user
 const UserProtectedRoute = ({ children }) => {
@@ -123,6 +124,15 @@ function App() {
             element={
               <AdminProtectedRoute>
                 <AdminCandidatesPage />
+              </AdminProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/profile"
+            element={
+              <AdminProtectedRoute>
+                <AdminProfilePage />
               </AdminProtectedRoute>
             }
           />

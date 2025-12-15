@@ -179,6 +179,18 @@ export default function Header() {
 
                       <button
                         onClick={() => {
+                          navigate('/admin/profile');
+                          setShowAdminDropdown(false);
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        Profil Saya
+                      </button>
+
+                      <div className="border-t border-gray-100 my-1"></div>
+
+                      <button
+                        onClick={() => {
                           navigate('/admin/dashboard');
                           setShowAdminDropdown(false);
                         }}
