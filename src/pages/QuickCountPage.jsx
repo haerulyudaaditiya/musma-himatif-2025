@@ -325,7 +325,11 @@ export default function QuickCountPage() {
                   {results.map((candidate) => (
                     <tr
                       key={candidate.id}
-                      className={`hover:bg-gray-50 ${candidate.isLeading ? 'bg-gradient-to-r from-green-50 to-emerald-50' : ''}`}
+                      className={`hover:bg-gray-50 ${
+                        candidate.isLeading
+                          ? 'bg-gradient-to-r from-green-50 to-emerald-50'
+                          : ''
+                      }`}
                     >
                       <td className="px-3 sm:px-4 py-3">
                         <div className="flex items-center gap-2">
@@ -430,7 +434,9 @@ export default function QuickCountPage() {
                     <div
                       className="h-2 sm:h-2.5 rounded-full bg-gradient-to-r from-blue-500 to-blue-600"
                       style={{
-                        width: `${(totalVotes / Math.max(totalVoters, 1)) * 100}%`,
+                        width: `${
+                          (totalVotes / Math.max(totalVoters, 1)) * 100
+                        }%`,
                       }}
                     ></div>
                   </div>
@@ -442,25 +448,22 @@ export default function QuickCountPage() {
             </div>
 
             {/* System Info */}
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-100 p-3 sm:p-4">
+            <div className="bg-white rounded-xl shadow border border-gray-100 p-3 sm:p-4">
               <h3 className="font-bold text-gray-900 mb-2 sm:mb-3 flex items-center gap-2 text-sm sm:text-base">
                 Informasi Sistem
               </h3>
               <ul className="space-y-2 text-xs sm:text-sm">
                 <li className="flex items-start gap-2">
-                  <div className="w-4 h-4 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs mt-0.5 flex-shrink-0">
-                  </div>
+                  <div className="w-4 h-4 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs mt-0.5 flex-shrink-0"></div>
                   <span className="text-gray-700">Data real-time</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <div className="w-4 h-4 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs mt-0.5 flex-shrink-0">
-                  </div>
+                  <div className="w-4 h-4 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs mt-0.5 flex-shrink-0"></div>
                   <span className="text-gray-700">Hasil sementara</span>
                 </li>
                 {isAdmin && (
                   <li className="flex items-start gap-2">
-                    <div className="w-4 h-4 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-xs mt-0.5 flex-shrink-0">
-                    </div>
+                    <div className="w-4 h-4 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-xs mt-0.5 flex-shrink-0"></div>
                     <span className="text-gray-700">Mode Admin aktif</span>
                   </li>
                 )}

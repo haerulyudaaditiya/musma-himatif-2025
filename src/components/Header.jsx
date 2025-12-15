@@ -266,7 +266,7 @@ export default function Header() {
 
                   <button
                     onClick={() => navigate('/admin/login')}
-                    className="btn btn-outline btn-sm gap-2"
+                    className="btn btn-ghost btn-sm gap-2"
                   >
                     <Shield size={16} />
                     <span className="hidden sm:inline">Admin</span>

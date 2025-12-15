@@ -269,8 +269,8 @@ export default function AdminConfigPage() {
                   status.status === 'active'
                     ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200'
                     : status.status === 'disabled'
-                      ? 'bg-gradient-to-r from-red-50 to-red-50 border-red-200'
-                      : 'bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200'
+                    ? 'bg-gradient-to-r from-red-50 to-red-50 border-red-200'
+                    : 'bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200'
                 }`}
               >
                 <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
@@ -286,8 +286,8 @@ export default function AdminConfigPage() {
                       {status.status === 'active'
                         ? 'Sistem Aktif'
                         : status.status === 'disabled'
-                          ? 'Sistem Dinonaktifkan'
-                          : 'Sistem Menunggu'}
+                        ? 'Sistem Dinonaktifkan'
+                        : 'Sistem Menunggu'}
                     </div>
                     <div className="text-xs sm:text-sm opacity-80">
                       {status.statusMessage}
@@ -311,7 +311,9 @@ export default function AdminConfigPage() {
                     Status Voting
                   </div>
                   <div
-                    className={`font-bold ${status.allowVoting ? 'text-green-600' : 'text-red-600'} text-xs sm:text-base`}
+                    className={`font-bold ${
+                      status.allowVoting ? 'text-green-600' : 'text-red-600'
+                    } text-xs sm:text-base`}
                   >
                     {status.allowVoting ? 'DIJALANKAN' : 'DIMATIKAN'}
                   </div>
@@ -361,7 +363,11 @@ export default function AdminConfigPage() {
                       <div className="text-xs sm:text-sm text-gray-600">
                         <div className="font-medium">Format: YYYY-MM-DD</div>
                         <div
-                          className={`inline-flex items-center gap-1 px-2 py-1 rounded mt-1 ${config.config_value ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}
+                          className={`inline-flex items-center gap-1 px-2 py-1 rounded mt-1 ${
+                            config.config_value
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-gray-100 text-gray-800'
+                          }`}
                         >
                           {config.config_value
                             ? 'Tanggal diatur'
@@ -469,7 +475,11 @@ export default function AdminConfigPage() {
                       <div className="text-xs sm:text-sm text-gray-600">
                         <div className="font-medium">Status Saat Ini</div>
                         <div
-                          className={`inline-flex items-center gap-1 px-2 py-1 rounded mt-1 ${config.config_value === 'true' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
+                          className={`inline-flex items-center gap-1 px-2 py-1 rounded mt-1 ${
+                            config.config_value === 'true'
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}
                         >
                           {config.config_value === 'true' ? (
                             <>Diaktifkan</>
@@ -534,8 +544,8 @@ export default function AdminConfigPage() {
                         {config.config_key.includes('display')
                           ? 'Display'
                           : config.config_key.includes('contact')
-                            ? 'Kontak'
-                            : 'Lokasi'}
+                          ? 'Kontak'
+                          : 'Lokasi'}
                       </div>
                     </div>
                   </div>
@@ -543,8 +553,8 @@ export default function AdminConfigPage() {
             </div>
           </div>
 
-          {/* Summary */}
-          <div className="mt-6 sm:mt-8 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-100 p-4 sm:p-6">
+          {/* Summary - Warna PUTIH */}
+          <div className="mt-6 sm:mt-8 bg-white rounded-xl shadow border border-gray-100 p-4 sm:p-6">
             <h3 className="font-bold text-gray-900 mb-3 sm:mb-4 text-sm sm:text-base">
               Ringkasan Konfigurasi
             </h3>
@@ -564,7 +574,9 @@ export default function AdminConfigPage() {
                   Sistem Voting
                 </div>
                 <div
-                  className={`font-bold ${status.allowVoting ? 'text-green-600' : 'text-red-600'} text-sm sm:text-base`}
+                  className={`font-bold ${
+                    status.allowVoting ? 'text-green-600' : 'text-red-600'
+                  } text-sm sm:text-base`}
                 >
                   {status.allowVoting ? 'AKTIF' : 'NONAKTIF'}
                 </div>
@@ -574,7 +586,9 @@ export default function AdminConfigPage() {
                   Perubahan Belum Disimpan
                 </div>
                 <div
-                  className={`font-bold ${hasChanges ? 'text-amber-600' : 'text-gray-600'} text-sm sm:text-base`}
+                  className={`font-bold ${
+                    hasChanges ? 'text-amber-600' : 'text-gray-600'
+                  } text-sm sm:text-base`}
                 >
                   {hasChanges ? 'ADA' : 'TIDAK ADA'}
                 </div>

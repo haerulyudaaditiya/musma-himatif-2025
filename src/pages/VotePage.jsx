@@ -216,10 +216,10 @@ export default function VotePage() {
                 votingStatus.status === 'active'
                   ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200'
                   : votingStatus.status === 'already_voted'
-                    ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200'
-                    : votingStatus.status === 'not_checked_in'
-                      ? 'bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200'
-                      : 'bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200'
+                  ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200'
+                  : votingStatus.status === 'not_checked_in'
+                  ? 'bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200'
+                  : 'bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200'
               }`}
             >
               <div className="flex items-center gap-4">
@@ -246,10 +246,10 @@ export default function VotePage() {
                     {votingStatus.status === 'active'
                       ? 'Siap Memilih'
                       : votingStatus.status === 'already_voted'
-                        ? 'Sudah Memilih'
-                        : votingStatus.status === 'not_checked_in'
-                          ? 'Belum Check-in'
-                          : 'Menunggu Waktu Voting'}
+                      ? 'Sudah Memilih'
+                      : votingStatus.status === 'not_checked_in'
+                      ? 'Belum Check-in'
+                      : 'Menunggu Waktu Voting'}
                   </h3>
                   <p className="text-gray-700 text-sm">
                     {votingStatus.message}
@@ -269,26 +269,33 @@ export default function VotePage() {
             </div>
           </div>
 
-          {/* Keamanan & Kerahasiaan Banner */}
-          <div className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4">
-            <div className="flex items-start gap-3">
-              <div>
-                <h3 className="font-bold text-blue-800 text-sm mb-1">
-                  Keamanan & Kerahasiaan Pemilihan
-                </h3>
-                <ul className="text-xs text-blue-700 space-y-1">
-                  <li>
-                    • Pilihan Anda bersifat <strong>RAHASIA</strong> dan tidak
-                    tercatat identitasnya
-                  </li>
-                  <li>
-                    • Hasil hanya dapat dilihat oleh panitia setelah voting
-                    ditutup
-                  </li>
-                  <li>• Sistem tidak menyimpan data pilihan per individu</li>
-                </ul>
-              </div>
-            </div>
+          {/* Keamanan & Kerahasiaan Pemilihan - CARD PUTIH */}
+          <div className="mb-6 bg-white rounded-xl shadow border border-gray-100 p-4 sm:p-6">
+            <h3 className="font-bold text-gray-900 mb-3 sm:mb-4 flex items-center gap-2 text-sm sm:text-base">
+              Keamanan & Kerahasiaan Pemilihan
+            </h3>
+            <ul className="space-y-2 sm:space-y-3 text-xs sm:text-sm text-gray-700">
+              <li className="flex items-start gap-2">
+                <div className="w-4 h-4 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs mt-0.5 flex-shrink-0">
+                </div>
+                <span>
+                  Pilihan Anda bersifat <strong>RAHASIA</strong> dan tidak
+                  tercatat identitasnya
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <div className="w-4 h-4 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs mt-0.5 flex-shrink-0">
+                </div>
+                <span>
+                  Hasil hanya dapat dilihat oleh panitia setelah voting ditutup
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <div className="w-4 h-4 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs mt-0.5 flex-shrink-0">
+                </div>
+                <span>Sistem tidak menyimpan data pilihan per individu</span>
+              </li>
+            </ul>
           </div>
 
           {/* Candidates Grid */}

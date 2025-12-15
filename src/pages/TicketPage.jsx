@@ -381,9 +381,9 @@ export default function TicketPage() {
                             {votingAvailability &&
                               votingAvailability.status === 'active' &&
                               !participant.sudah_vote && (
-                                <div className="mt-1 inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs sm:text-sm font-medium">
-                                  <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
-                                  Voting sedang berlangsung
+                                <div className="mt-1 inline-flex items-center gap-2 px-3 py-1.5 bg-green-100 text-green-800 rounded-full text-xs sm:text-sm font-medium leading-none">
+                                  <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                                  <span>Voting sedang berlangsung</span>
                                 </div>
                               )}
                           </div>
