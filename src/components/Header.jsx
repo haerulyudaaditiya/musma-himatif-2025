@@ -103,7 +103,9 @@ export default function Header() {
                     </span>
                     <ChevronDown
                       size={16}
-                      className={`transition-transform ${showUserDropdown ? 'rotate-180' : ''}`}
+                      className={`transition-transform ${
+                        showUserDropdown ? 'rotate-180' : ''
+                      }`}
                     />
                   </button>
 
@@ -160,7 +162,9 @@ export default function Header() {
                     <span className="font-medium">{adminName}</span>
                     <ChevronDown
                       size={16}
-                      className={`transition-transform ${showAdminDropdown ? 'rotate-180' : ''}`}
+                      className={`transition-transform ${
+                        showAdminDropdown ? 'rotate-180' : ''
+                      }`}
                     />
                   </button>
 
@@ -191,6 +195,26 @@ export default function Header() {
                         className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2"
                       >
                         Scan Presensi
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          navigate('/admin/config');
+                          setShowAdminDropdown(false);
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        Konfigurasi
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          navigate('/admin/candidates');
+                          setShowAdminDropdown(false);
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        Kelola Kandidat
                       </button>
 
                       <button
