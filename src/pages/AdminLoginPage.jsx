@@ -26,6 +26,29 @@ export default function AdminLoginPage() {
   });
   const [loginAttempts, setLoginAttempts] = useState(0);
   const [lockUntil, setLockUntil] = useState(null);
+  const [countdown, setCountdown] = useState('');
+
+  const formatRemainingTime = (lockUntilTimestamp) => {
+    if (!lockUntilTimestamp) return null;
+
+    const now = Date.now();
+    if (now >= lockUntilTimestamp) return null;
+
+    const remainingSeconds = Math.ceil((lockUntilTimestamp - now) / 1000);
+
+    if (remainingSeconds >= 3600) {
+      const hours = Math.floor(remainingSeconds / 3600);
+      const minutes = Math.floor((remainingSeconds % 3600) / 60);
+      const seconds = remainingSeconds % 60;
+      return `${hours} jam ${minutes} menit ${seconds} detik`;
+    } else if (remainingSeconds >= 60) {
+      const minutes = Math.floor(remainingSeconds / 60);
+      const seconds = remainingSeconds % 60;
+      return `${minutes} menit ${seconds} detik`;
+    } else {
+      return `${remainingSeconds} detik`;
+    }
+  };
 
   useEffect(() => {
     const savedAttempts = localStorage.getItem('musma_login_attempts');
@@ -36,9 +59,48 @@ export default function AdminLoginPage() {
     }
 
     if (savedLockUntil) {
-      setLockUntil(parseInt(savedLockUntil));
+      const lockTime = parseInt(savedLockUntil);
+      setLockUntil(lockTime);
+
+      // Auto-reset jika lock time sudah lewat
+      if (Date.now() > lockTime) {
+        localStorage.removeItem('musma_lock_until');
+        localStorage.removeItem('musma_login_attempts');
+        setLockUntil(null);
+        setLoginAttempts(0);
+      }
     }
   }, []);
+
+  // Countdown real-time
+  useEffect(() => {
+    let interval;
+
+    if (lockUntil && Date.now() < lockUntil) {
+      // Update segera
+      const formattedTime = formatRemainingTime(lockUntil);
+      setCountdown(formattedTime);
+
+      // Update setiap detik
+      interval = setInterval(() => {
+        const formattedTime = formatRemainingTime(lockUntil);
+        setCountdown(formattedTime);
+
+        if (Date.now() >= lockUntil) {
+          setCountdown('');
+          updateLockUntil(null);
+          updateLoginAttempts(0);
+          clearInterval(interval);
+        }
+      }, 1000);
+    } else {
+      setCountdown('');
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [lockUntil]);
 
   const updateLoginAttempts = (attempts) => {
     setLoginAttempts(attempts);
@@ -76,7 +138,6 @@ export default function AdminLoginPage() {
     const { name, value } = e.target;
     setCredentials((prev) => ({ ...prev, [name]: value }));
 
-    // Real-time validation
     const error = validateField(name, value);
     setErrors((prev) => ({ ...prev, [name]: error }));
   };
@@ -84,17 +145,18 @@ export default function AdminLoginPage() {
   const handleLogin = async (e) => {
     e.preventDefault();
 
+    // Cek jika account terkunci
     if (lockUntil && Date.now() < lockUntil) {
-      showToast.error(
-        `Coba lagi dalam ${Math.ceil((lockUntil - Date.now()) / 1000)} detik`
-      );
+      const formattedTime = formatRemainingTime(lockUntil);
+      showToast.error(`Akun terkunci. Coba lagi dalam ${formattedTime}`);
       return;
     }
 
+    // Cek jika sudah mencapai batas percobaan
     if (loginAttempts >= 5) {
-      const lockTime = Date.now() + 15 * 60 * 1000; // 15 menit
-      updateLockUntil(lockTime); 
-      showToast.error('Terlalu banyak percobaan. Coba lagi dalam 15 menit.');
+      const lockTime = Date.now() + 15 * 60 * 1000;
+      updateLockUntil(lockTime);
+      showToast.error('Terlalu banyak percobaan. Coba lagi dalam 15 menit');
       return;
     }
 
@@ -154,8 +216,21 @@ export default function AdminLoginPage() {
       navigate('/admin/dashboard');
     } catch (error) {
       console.error('Login error:', error);
-      showToast.error(error.message || 'Login gagal. Coba lagi.');
-      updateLoginAttempts(loginAttempts + 1);
+
+      const newAttempts = loginAttempts + 1;
+      updateLoginAttempts(newAttempts);
+
+      const remainingAttempts = 5 - newAttempts;
+
+      if (remainingAttempts > 0) {
+        showToast.error(
+          `${error.message} (Percobaan tersisa: ${remainingAttempts})`
+        );
+      } else {
+        const lockTime = Date.now() + 15 * 60 * 1000;
+        updateLockUntil(lockTime);
+        showToast.error('Terlalu banyak percobaan. Coba lagi dalam 15 menit');
+      }
     } finally {
       setCredentials({ username: '', password: '' });
       setLoading(false);
@@ -189,6 +264,19 @@ export default function AdminLoginPage() {
                   Gunakan kredensial yang diberikan panitia
                 </p>
 
+                {/* Countdown Display */}
+                {countdown && (
+                  <div className="mb-4 sm:mb-6 bg-red-50 border border-red-200 rounded-lg p-3 sm:p-4">
+                    <div className="flex items-center justify-center gap-2">
+                      <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-red-600" />
+                      <p className="text-sm sm:text-base text-red-700 font-medium">
+                        Akun terkunci. Coba lagi dalam:{' '}
+                        <span className="font-bold">{countdown}</span>
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 <form onSubmit={handleLogin} className="space-y-4 sm:space-y-6">
                   {/* Username Field */}
                   <div>
@@ -207,7 +295,7 @@ export default function AdminLoginPage() {
                       }`}
                       value={credentials.username}
                       onChange={handleChange}
-                      disabled={loading}
+                      disabled={loading || countdown}
                     />
                     {errors.username && (
                       <p className="mt-1 text-xs sm:text-sm text-red-600 flex items-center gap-1">
@@ -235,12 +323,13 @@ export default function AdminLoginPage() {
                         }`}
                         value={credentials.password}
                         onChange={handleChange}
-                        disabled={loading}
+                        disabled={loading || countdown}
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
                         className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                        disabled={loading || countdown}
                       >
                         {showPassword ? (
                           <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -257,6 +346,18 @@ export default function AdminLoginPage() {
                     )}
                   </div>
 
+                  {/* Attempts Info */}
+                  {loginAttempts > 0 && !countdown && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 sm:p-4">
+                      <div className="flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600" />
+                        <p className="text-sm sm:text-base text-yellow-700">
+                          Percobaan login gagal: {loginAttempts} dari 5
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Security Note */}
                   <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 sm:p-4">
                     <div className="flex items-start gap-2">
@@ -271,7 +372,10 @@ export default function AdminLoginPage() {
                   <button
                     type="submit"
                     disabled={
-                      loading || !credentials.username || !credentials.password
+                      loading ||
+                      !credentials.username ||
+                      !credentials.password ||
+                      countdown
                     }
                     className="w-full py-2.5 sm:py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow hover:shadow-md flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
                   >
@@ -280,6 +384,8 @@ export default function AdminLoginPage() {
                         <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                         Memproses...
                       </div>
+                    ) : countdown ? (
+                      'Akun Terkunci'
                     ) : (
                       <>
                         <span className="hidden sm:inline">
