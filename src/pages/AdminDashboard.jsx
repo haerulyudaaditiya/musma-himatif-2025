@@ -479,7 +479,6 @@ export default function AdminDashboard() {
           <div className="bg-white rounded-xl shadow border border-gray-100 overflow-hidden">
             <div className="p-6 border-b border-gray-200">
               <h2 className="font-bold text-gray-900 flex items-center gap-2">
-                <Clock className="w-5 h-5 text-blue-600" />
                 Aktivitas Sistem
               </h2>
               <p className="text-sm text-gray-600">
