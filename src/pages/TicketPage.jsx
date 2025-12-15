@@ -70,6 +70,7 @@ export default function TicketPage() {
 
   const fetchParticipant = useCallback(async () => {
     const savedNim = localStorage.getItem('musma_nim');
+    const savedUserId = localStorage.getItem('musma_user_id'); 
 
     if (!savedNim) {
       showToast.error('Sesi habis, silakan daftar ulang');
@@ -78,34 +79,48 @@ export default function TicketPage() {
     }
 
     try {
-      // Fetch participant dan event config secara paralel
-      const [participantResponse] = await Promise.all([
-        supabase.from('users').select('*').eq('nim', savedNim).single(),
-        fetchEventConfig(),
-      ]);
-
-      const { data, error } = participantResponse;
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('nim', savedNim)
+        .single();
 
       if (error || !data) {
-        throw new Error('Data tidak ditemukan');
-      }
+        // Fallback: coba dengan user_id jika ada
+        if (savedUserId) {
+          const { data: userData, error: userError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', savedUserId)
+            .single();
 
-      setParticipant(data);
+          if (userError || !userData) {
+            throw new Error('Data tidak ditemukan');
+          }
+          setParticipant(userData);
+        } else {
+          throw new Error('Data tidak ditemukan');
+        }
+      } else {
+        setParticipant(data);
+      }
 
       const availability = await checkVotingAvailability();
       setVotingAvailability(availability);
     } catch (error) {
       showToast.error(error.message);
       localStorage.removeItem('musma_nim');
+      localStorage.removeItem('musma_user_id'); 
       navigate('/');
     } finally {
       setLoading(false);
     }
-  }, [navigate, fetchEventConfig]);
+  }, [navigate]);
 
   useEffect(() => {
+    fetchEventConfig();
     fetchParticipant();
-  }, [fetchParticipant]);
+  }, [fetchEventConfig, fetchParticipant]);
 
   const getVotingAction = () => {
     if (!participant || !votingAvailability) return null;

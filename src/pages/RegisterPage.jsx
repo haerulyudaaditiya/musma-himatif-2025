@@ -190,7 +190,7 @@ export default function RegisterPage() {
         const kelasAngkatan = formData.kelas.match(/IF-(\d{2})/i);
         if (kelasAngkatan && `20${kelasAngkatan[1]}` !== year) {
           updatedData.kelas = '';
-          showToast.warning(
+          showToast.info(
             'Kelas direset karena tidak sesuai dengan angkatan NIM'
           );
         }
@@ -223,31 +223,70 @@ export default function RegisterPage() {
 
   const proceedWithRegistration = async () => {
     try {
-      const { error } = await supabase.from('users').insert([
-        {
-          nim: formData.nim,
-          nama: formData.nama.toUpperCase(),
-          email: formData.email.toLowerCase(),
-          kelas: formData.kelas,
-          status_kehadiran: false,
-          sudah_vote: false,
-          waktu_daftar: new Date(),
-        },
-      ]);
+      console.log('Starting registration...');
 
-      if (error) throw error;
+      const { data: user, error: dbError } = await supabase
+        .from('users')
+        .insert([
+          {
+            nim: formData.nim,
+            nama: formData.nama.toUpperCase(),
+            email: formData.email.toLowerCase(),
+            kelas: formData.kelas,
+            status_kehadiran: false,
+            sudah_vote: false,
+            waktu_daftar: new Date(),
+          },
+        ])
+        .select()
+        .single();
+
+      if (dbError) throw dbError;
+
+      console.log('User saved to database:', user.id);
+
+      const ticketString = `MUSMA-${Date.now()}-${user.id
+        .substring(0, 8)
+        .toUpperCase()}`;
+
+      console.log('Sending email to:', formData.email);
+
+      const { data: emailResult, error: emailError } =
+        await supabase.functions.invoke('send-registration-email', {
+          body: {
+            email: formData.email.toLowerCase(),
+            nama: formData.nama.toUpperCase(),
+            nim: formData.nim,
+            ticketString: ticketString,
+            userId: user.id, 
+          },
+        });
 
       localStorage.setItem('musma_nim', formData.nim);
       localStorage.setItem('musma_nama', formData.nama);
       localStorage.setItem('musma_kelas', formData.kelas);
+      localStorage.setItem('musma_user_id', user.id); 
 
-      showToast.success('Pendaftaran berhasil! Tiket akan dikirim ke email.');
+      if (emailError) {
+        console.warn('Email failed:', emailError);
+        showToast.info(
+          'Pendaftaran berhasil! Simpan tiket Anda di halaman berikut.'
+        );
+      } else {
+        console.log('Email sent successfully:', emailResult);
+        showToast.success(
+          'Pendaftaran berhasil! Tiket telah dikirim ke email Anda.'
+        );
+      }
 
-      setTimeout(() => navigate('/ticket'), 1500);
+      console.log('Registration complete, redirecting...');
+
+      setTimeout(() => {
+        navigate('/ticket');
+      }, 2000);
     } catch (error) {
-      showToast.error(error.message);
-    } finally {
-      setLoading(false);
+      console.error('Registration error:', error);
+      throw error;
     }
   };
 
@@ -565,7 +604,9 @@ export default function RegisterPage() {
               <div className="flex justify-center mb-4 sm:mb-6">
                 <div className="flex items-center bg-white rounded-full px-3 py-1.5 sm:px-4 sm:py-2 shadow-sm border border-gray-200">
                   <div
-                    className={`flex items-center ${step >= 1 ? 'text-blue-600' : 'text-gray-400'}`}
+                    className={`flex items-center ${
+                      step >= 1 ? 'text-blue-600' : 'text-gray-400'
+                    }`}
                   >
                     <div
                       className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center mr-1 sm:mr-2 text-xs sm:text-sm ${
@@ -586,7 +627,9 @@ export default function RegisterPage() {
                   <div className="w-6 h-0.5 bg-gray-300 mx-2 sm:mx-3"></div>
 
                   <div
-                    className={`flex items-center ${step >= 2 ? 'text-blue-600' : 'text-gray-400'}`}
+                    className={`flex items-center ${
+                      step >= 2 ? 'text-blue-600' : 'text-gray-400'
+                    }`}
                   >
                     <div
                       className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center mr-1 sm:mr-2 text-xs sm:text-sm ${
@@ -989,7 +1032,10 @@ export default function RegisterPage() {
                           <div
                             className="bg-blue-600 h-1.5 sm:h-2 rounded-full transition-all duration-500"
                             style={{
-                              width: `${(fullClasses / Math.max(classes.length, 1)) * 100}%`,
+                              width: `${
+                                (fullClasses / Math.max(classes.length, 1)) *
+                                100
+                              }%`,
                             }}
                           ></div>
                         </div>

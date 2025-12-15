@@ -95,7 +95,7 @@ serve(async (req) => {
       body: JSON.stringify({
         from: 'MUSMA HIMATIF <onboarding@resend.dev>',
         to: [email],
-        subject: `🎫 Tiket Digital MUSMA 2025 - ${nama}`,
+        subject: `Tiket Digital MUSMA 2025 - ${nama}`,
         html: emailHtml,
       }),
     });

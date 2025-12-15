@@ -26,4 +26,12 @@ export default defineConfig([
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
     },
   },
+  {
+    files: ['supabase/functions/**/*.js'],
+    languageOptions: {
+      globals: {
+        Deno: 'readonly',
+      },
+    },
+  },
 ])
