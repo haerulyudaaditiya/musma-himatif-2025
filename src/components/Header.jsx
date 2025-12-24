@@ -27,7 +27,8 @@ export default function Header() {
 
   // Cek status login
   const isUserLoggedIn = localStorage.getItem('musma_nim');
-  const isAdminLoggedIn = localStorage.getItem('musma_admin_token');
+  const adminToken = localStorage.getItem('musma_admin_token');
+  const isAdminLoggedIn = adminToken === 'SECRET_KEY_HIMATIF_2025_SECURE_X99';
   const userName = localStorage.getItem('musma_nama') || 'User';
   const adminName = localStorage.getItem('musma_admin_name') || 'Admin';
 
@@ -48,6 +49,7 @@ export default function Header() {
     } else if (logoutType === 'admin') {
       localStorage.removeItem('musma_admin_token');
       localStorage.removeItem('musma_admin_name');
+      localStorage.removeItem('musma_admin_id');
       showToast.success('Berhasil logout dari admin panel');
       navigate('/admin/login');
     }
