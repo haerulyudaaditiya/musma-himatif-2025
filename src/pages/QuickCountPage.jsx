@@ -30,14 +30,13 @@ export default function QuickCountPage() {
   const [showDetails, setShowDetails] = useState(false);
 
   const checkUserVote = useCallback(async () => {
-    const adminSession = localStorage.getItem('musma_admin_session');
-
-    if (adminSession) {
+    const token = localStorage.getItem('musma_admin_token');
+    if (token === 'SECRET_KEY_HIMATIF_2025_SECURE_X99') {
       setIsAdmin(true);
       return true;
     }
-
     showToast.error('Hanya panitia yang boleh melihat hasil quick count');
+    localStorage.removeItem('musma_admin_token'); 
     navigate('/ticket');
     return false;
   }, [navigate]);

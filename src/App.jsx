@@ -25,7 +25,7 @@ const UserProtectedRoute = ({ children }) => {
 
 // Protected Route untuk halaman admin
 const AdminProtectedRoute = ({ children }) => {
-  const isAdmin = localStorage.getItem('musma_admin_session');
+  const isAdmin = localStorage.getItem('musma_admin_token');
   return isAdmin ? children : <Navigate to="/admin/login" replace />;
 };
 

@@ -42,8 +42,9 @@ export default function AdminDashboard() {
 
   // Cek session admin
   useEffect(() => {
-    const isAdmin = localStorage.getItem('musma_admin_session');
-    if (!isAdmin) {
+    const token = localStorage.getItem('musma_admin_token');
+    if (token !== 'SECRET_KEY_HIMATIF_2025_SECURE_X99') {
+      localStorage.removeItem('musma_admin_token'); 
       navigate('/admin/login');
     }
   }, [navigate]);

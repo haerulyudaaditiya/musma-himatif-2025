@@ -31,9 +31,10 @@ export default function ScanPage() {
 
   // Cek session admin
   useEffect(() => {
-    const isAdmin = localStorage.getItem('musma_admin_session');
-    if (!isAdmin) {
+    const token = localStorage.getItem('musma_admin_token');
+    if (token !== 'SECRET_KEY_HIMATIF_2025_SECURE_X99') {
       showToast.error('Akses ditolak. Harap login sebagai admin.');
+      localStorage.removeItem('musma_admin_token');
       navigate('/admin/login');
     }
   }, [navigate]);
@@ -254,8 +255,8 @@ export default function ScanPage() {
                 isScanning
                   ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white'
                   : scanResult
-                    ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white'
-                    : 'bg-gradient-to-r from-amber-500 to-orange-500 text-white'
+                  ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white'
+                  : 'bg-gradient-to-r from-amber-500 to-orange-500 text-white'
               }`}
             >
               <div className="flex items-center justify-center gap-2 sm:gap-3">

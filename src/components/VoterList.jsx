@@ -4,7 +4,8 @@ import { showToast } from '../libs/toast';
 import { X, Users, CheckCircle, XCircle, Search, Filter } from 'lucide-react';
 
 export default function VoterList({ show, onClose }) {
-  const isAdmin = localStorage.getItem('musma_admin_session');
+  const token = localStorage.getItem('musma_admin_token');
+  const isAuthorized = token === 'SECRET_KEY_HIMATIF_2025_SECURE_X99';
   const [voters, setVoters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -12,6 +13,8 @@ export default function VoterList({ show, onClose }) {
 
   useEffect(() => {
     const fetchVoters = async () => {
+      if (!isAuthorized) return;
+
       try {
         setLoading(true);
         let query = supabase.from('users').select('*').order('nama');
@@ -42,7 +45,7 @@ export default function VoterList({ show, onClose }) {
     if (show) {
       fetchVoters();
     }
-  }, [show, filter]);
+  }, [show, filter, isAuthorized]);
 
   const filteredVoters = voters.filter(
     (voter) =>
@@ -52,16 +55,17 @@ export default function VoterList({ show, onClose }) {
   );
 
   useEffect(() => {
-    if (show && !isAdmin) {
+    if (show && !isAuthorized) {
       showToast.error('Akses ditolak. Hanya admin yang boleh melihat detail.');
+      if (token) localStorage.removeItem('musma_admin_token');
       onClose();
     }
-  }, [show, isAdmin, onClose]);
+  }, [show, isAuthorized, onClose, token]);
 
   if (!show) return null;
 
-  if (!isAdmin) {
-    return null; // Jangan render apa-apa
+  if (!isAuthorized) {
+    return null;
   }
 
   return (

@@ -113,15 +113,15 @@ export default function AdminProfilePage() {
 
   // Cek session admin
   useEffect(() => {
-    const isAdmin = localStorage.getItem('musma_admin_session');
+    const token = localStorage.getItem('musma_admin_token');
     const adminId = localStorage.getItem('musma_admin_id');
-
-    if (!isAdmin || !adminId) {
+    if (token !== 'SECRET_KEY_HIMATIF_2025_SECURE_X99' || !adminId) {
       showToast.error('Akses ditolak. Harap login sebagai admin.');
+      localStorage.removeItem('musma_admin_token');
+      localStorage.removeItem('musma_admin_id');
       navigate('/admin/login');
       return;
     }
-
     fetchAdminProfile(adminId);
   }, [navigate]);
 
@@ -281,7 +281,7 @@ export default function AdminProfilePage() {
 
   const handleLogout = () => {
     setShowLogoutModal(false);
-    localStorage.removeItem('musma_admin_session');
+    localStorage.removeItem('musma_admin_token');
     localStorage.removeItem('musma_admin_id');
     localStorage.removeItem('musma_admin_name');
     localStorage.removeItem('musma_admin_role');

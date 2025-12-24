@@ -27,7 +27,7 @@ export default function Header() {
 
   // Cek status login
   const isUserLoggedIn = localStorage.getItem('musma_nim');
-  const isAdminLoggedIn = localStorage.getItem('musma_admin_session');
+  const isAdminLoggedIn = localStorage.getItem('musma_admin_token');
   const userName = localStorage.getItem('musma_nama') || 'User';
   const adminName = localStorage.getItem('musma_admin_name') || 'Admin';
 
@@ -46,7 +46,7 @@ export default function Header() {
       showToast.success('Berhasil logout dari akun peserta');
       navigate('/');
     } else if (logoutType === 'admin') {
-      localStorage.removeItem('musma_admin_session');
+      localStorage.removeItem('musma_admin_token');
       localStorage.removeItem('musma_admin_name');
       showToast.success('Berhasil logout dari admin panel');
       navigate('/admin/login');

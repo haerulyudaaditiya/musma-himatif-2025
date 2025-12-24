@@ -204,7 +204,10 @@ export default function AdminLoginPage() {
       }
 
       // Login Sukses
-      localStorage.setItem('musma_admin_session', 'true');
+      localStorage.setItem(
+        'musma_admin_token',
+        'SECRET_KEY_HIMATIF_2025_SECURE_X99'
+      );
       localStorage.setItem('musma_admin_id', admin.id);
       localStorage.setItem('musma_admin_name', admin.name || admin.username);
       localStorage.setItem('musma_admin_role', admin.role || 'admin');
