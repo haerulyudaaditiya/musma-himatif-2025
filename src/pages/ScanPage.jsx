@@ -28,6 +28,8 @@ export default function ScanPage() {
   const [scanner, setScanner] = useState(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [participantToCheckin, setParticipantToCheckin] = useState(null);
+  const [manualNim, setManualNim] = useState('');
+  const [eventConfig, setEventConfig] = useState({});
 
   // Cek session admin
   useEffect(() => {
@@ -38,6 +40,57 @@ export default function ScanPage() {
       navigate('/admin/login');
     }
   }, [navigate]);
+
+  useEffect(() => {
+    const fetchConfig = async () => {
+      const { data } = await supabase.from('event_config').select('*');
+      if (data) {
+        const configMap = {};
+        data.forEach((item) => {
+          configMap[item.config_key] = item.config_value;
+        });
+        setEventConfig(configMap);
+      }
+    };
+    fetchConfig();
+  }, []);
+
+  const isCheckInTimeValid = useCallback(() => {
+    if (!eventConfig || !eventConfig.event_date) return true;
+
+    const now = new Date();
+    const todayStr = now.toLocaleDateString('en-CA');
+
+    if (eventConfig.event_date !== todayStr) {
+      showToast.error(
+        `Presensi DITOLAK. Jadwal acara: ${eventConfig.event_date}, Hari ini: ${todayStr}`
+      );
+      return false;
+    }
+    const currentTime = now.toTimeString().slice(0, 5);
+
+    // Cek Jam Mulai
+    if (
+      eventConfig.presensi_start &&
+      currentTime < eventConfig.presensi_start
+    ) {
+      showToast.error(
+        `Presensi BELUM DIBUKA. Jadwal mulai: ${eventConfig.presensi_start} WIB`
+      );
+      return false;
+    }
+
+    // Cek Jam Selesai
+    if (eventConfig.presensi_end && currentTime > eventConfig.presensi_end) {
+      showToast.error(
+        `Presensi SUDAH DITUTUP. Jadwal selesai: ${eventConfig.presensi_end} WIB`
+      );
+      return false;
+    }
+
+    // Jika lolos semua pengecekan
+    return true;
+  }, [eventConfig]);
 
   // Initialize scanner
   const initScanner = useCallback(() => {
@@ -64,6 +117,12 @@ export default function ScanPage() {
       // Di bagian onScanSuccess function, perbaiki menjadi:
       const onScanSuccess = async (decodedText) => {
         if (processing || !isScanning) return;
+
+        if (!isCheckInTimeValid()) {
+          newScanner.pause();
+          setTimeout(() => newScanner.resume(), 3000);
+          return;
+        }
 
         try {
           // Parse QR data
@@ -131,7 +190,7 @@ export default function ScanPage() {
       setCameraError('Gagal mengakses kamera. Pastikan izin kamera diberikan.');
       showToast.error('Gagal menginisialisasi scanner');
     }
-  }, [isScanning, scanner, processing]);
+  }, [isScanning, scanner, processing, isCheckInTimeValid]);
 
   // Start/stop scanner
   useEffect(() => {
@@ -208,6 +267,50 @@ export default function ScanPage() {
     setParticipantToCheckin(null);
     setIsScanning(true);
     setCameraError(null);
+  };
+
+  const handleManualSubmit = async (e) => {
+    e.preventDefault();
+    if (!manualNim.trim()) return;
+
+    if (!isCheckInTimeValid()) return;
+
+    // Optional: Set processing true biar tombol gak bisa diklik double
+    setProcessing(true);
+
+    try {
+      // 1. Cari user berdasarkan NIM (Bukan ID)
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('nim', manualNim.trim()) // Pastikan kolom di DB adalah 'nim'
+        .single();
+
+      if (error || !data) {
+        throw new Error('NIM tidak ditemukan dalam database.');
+      }
+
+      // 2. Cek apakah sudah check-in (Logic sama dengan scanner)
+      if (data.status_kehadiran) {
+        showToast.error(`Gagal: ${data.nama} sudah check-in sebelumnya.`);
+        setProcessing(false);
+        return;
+      }
+
+      // 3. Jika Valid, matikan scanner & buka modal konfirmasi
+      if (scanner) {
+        scanner.clear().catch(console.error); // Stop kamera biar hemat resource
+      }
+      setIsScanning(false);
+      setParticipantToCheckin(data);
+      setShowConfirmModal(true);
+      setManualNim(''); // Reset input field
+    } catch (error) {
+      console.error('Manual check-in error:', error);
+      showToast.error(error.message);
+    } finally {
+      setProcessing(false);
+    }
   };
 
   return (
@@ -310,6 +413,30 @@ export default function ScanPage() {
                     <p className="mt-3 sm:mt-4 text-gray-600 text-sm sm:text-base">
                       Arahkan kamera ke QR code peserta
                     </p>
+                    <div className="mt-6 pt-6 border-t border-gray-100 w-full max-w-xs mx-auto">
+                      <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">
+                        Atau Input Manual
+                      </p>
+                      <form
+                        onSubmit={handleManualSubmit}
+                        className="flex gap-2"
+                      >
+                        <input
+                          type="text"
+                          placeholder="Ketik NIM..."
+                          value={manualNim}
+                          onChange={(e) => setManualNim(e.target.value)}
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                        />
+                        <button
+                          type="submit"
+                          disabled={processing || !manualNim}
+                          className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition text-sm font-medium disabled:opacity-50"
+                        >
+                          Cek
+                        </button>
+                      </form>
+                    </div>
                     <div className="mt-1 text-xs sm:text-sm text-gray-500">
                       Scanner akan otomatis mendeteksi QR code
                     </div>
